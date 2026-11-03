@@ -70,7 +70,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             when(tab) {
                 0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal)
                 1 -> Plan(p, database)
-                2 -> Recipes(p, tier) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
+                2 -> Recipes(p, tier, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
             }
         }
@@ -243,7 +243,7 @@ private val recipes=listOf(
                 listOf("Budget","Standard","Premium").forEach { FilterChip(selected=tier==it,onClick={onTier(it)},label={Text(it)}) }
             }
         }
-        items(recipes.filter { tier!="Budget" || it.cost<=50 }) { r ->
+        item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes")}) }\n        items(visibleRecipes,key={it.title}) { r ->
             Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically) {
                     Box(Modifier.size(52.dp).background(Mint,RoundedCornerShape(15.dp)),contentAlignment=Alignment.Center){Text(r.emoji,fontSize=26.sp)}
@@ -254,11 +254,11 @@ private val recipes=listOf(
                         Text(r.tags,color=Green,fontSize=11.sp)
                         Text("${r.kcal} kcal · ~₹${r.cost}/serving",color=Muted,fontSize=12.sp)
                     }
-                    Icon(Icons.Default.BookmarkBorder,"Save recipe",tint=Green)
+                    IconButton(onClick={scope.launch { if(r.title in savedIds) database.savedRecipeDao().remove(r.title) else database.savedRecipeDao().save(SavedRecipe(r.title)) }}) { Icon(if(r.title in savedIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,if(r.title in savedIds) "Remove saved recipe" else "Save recipe",tint=Green) }
                 }
             }
         }
-        item { Text("Costs are illustrative estimates, not live local prices.",color=Muted,fontSize=11.sp) }
+        item { if(visibleRecipes.isEmpty()) Text("No recipes match this filter.",color=Muted) }\n        item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
     }
 }
 @Composable private fun Profile(p:PaddingValues,hostel:Boolean,onHostel:(Boolean)->Unit) {

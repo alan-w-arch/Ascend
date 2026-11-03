@@ -34,6 +34,21 @@ interface MealCompletionDao {
     suspend fun removeCompletion(date: String, mealId: String)
 }
 
+@Entity(tableName = "saved_recipes")
+data class SavedRecipe(@PrimaryKey val recipeId: String)
+
+@Dao
+interface SavedRecipeDao {
+    @Query("SELECT recipeId FROM saved_recipes")
+    fun observeSavedRecipeIds(): Flow<List<String>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun save(recipe: SavedRecipe)
+
+    @Query("DELETE FROM saved_recipes WHERE recipeId = :recipeId")
+    suspend fun remove(recipeId: String)
+}
+
 @Entity(tableName = "custom_meals")
 data class CustomMeal(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -59,16 +74,16 @@ interface CustomMealDao {
     suspend fun delete(meal: CustomMeal)
 }
 
-@Database(entities = [MealCompletion::class, CustomMeal::class], version = 2, exportSchema = false)
+@Database(entities = [MealCompletion::class, CustomMeal::class, SavedRecipe::class], version = 3, exportSchema = false)
 abstract class AscendDatabase : RoomDatabase() {
     abstract fun mealCompletionDao(): MealCompletionDao
-    abstract fun customMealDao(): CustomMealDao
+    abstract fun customMealDao(): CustomMealDao\n    abstract fun savedRecipeDao(): SavedRecipeDao
 
     companion object {
         @Volatile private var INSTANCE: AscendDatabase? = null
         fun getInstance(context: Context): AscendDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, AscendDatabase::class.java, "ascend_local.db")
-                .addMigrations(MIGRATION_1_2).build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { INSTANCE = it }
         }
     }
 }
@@ -86,3 +101,5 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         )
     }
 }
+
+val MIGRATION_2_3 = object : Migration(2, 3) {\n    override fun migrate(db: SupportSQLiteDatabase) {\n        db.execSQL("CREATE TABLE IF NOT EXISTS `saved_recipes` (`recipeId` TEXT NOT NULL, PRIMARY KEY(`recipeId`))")\n    }\n}\n
