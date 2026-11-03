@@ -77,7 +77,8 @@ interface CustomMealDao {
 @Database(entities = [MealCompletion::class, CustomMeal::class, SavedRecipe::class], version = 3, exportSchema = false)
 abstract class AscendDatabase : RoomDatabase() {
     abstract fun mealCompletionDao(): MealCompletionDao
-    abstract fun customMealDao(): CustomMealDao\n    abstract fun savedRecipeDao(): SavedRecipeDao
+    abstract fun customMealDao(): CustomMealDao
+    abstract fun savedRecipeDao(): SavedRecipeDao
 
     companion object {
         @Volatile private var INSTANCE: AscendDatabase? = null
@@ -102,4 +103,8 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-val MIGRATION_2_3 = object : Migration(2, 3) {\n    override fun migrate(db: SupportSQLiteDatabase) {\n        db.execSQL("CREATE TABLE IF NOT EXISTS `saved_recipes` (`recipeId` TEXT NOT NULL, PRIMARY KEY(`recipeId`))")\n    }\n}\n
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `saved_recipes` (`recipeId` TEXT NOT NULL, PRIMARY KEY(`recipeId`))")
+    }
+}

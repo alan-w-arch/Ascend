@@ -234,7 +234,13 @@ private val recipes=listOf(
     Recipe("Moong dal khichdi","20 min · One pot",420,36,"Comfort food · Dinner","🍲"),
     Recipe("Paneer veggie wrap","12 min · Pan",460,72,"Vegetarian · Lunch","🌯")
 )
-@Composable private fun Recipes(p:PaddingValues,tier:String,onTier:(String)->Unit) {
+@Composable private fun Recipes(p:PaddingValues,tier:String,database:AscendDatabase,onTier:(String)->Unit) {
+    val scope = rememberCoroutineScope()
+    val savedIds by database.savedRecipeDao().observeSavedRecipeIds().collectAsState(initial=emptyList())
+    var savedOnly by remember { mutableStateOf(false) }
+    var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
+    val maxCost = when(tier) { "Budget" -> 50; "Standard" -> 75; else -> Int.MAX_VALUE }
+    val visibleRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Recipe library","Simple, student-friendly meals") }
         item {
@@ -243,8 +249,9 @@ private val recipes=listOf(
                 listOf("Budget","Standard","Premium").forEach { FilterChip(selected=tier==it,onClick={onTier(it)},label={Text(it)}) }
             }
         }
-        item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes")}) }\n        items(visibleRecipes,key={it.title}) { r ->
-            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+        item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes")}) }
+        items(visibleRecipes,key={it.title}) { r ->
+            Card(modifier=Modifier.clickable { selectedRecipe=r },shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically) {
                     Box(Modifier.size(52.dp).background(Mint,RoundedCornerShape(15.dp)),contentAlignment=Alignment.Center){Text(r.emoji,fontSize=26.sp)}
                     Spacer(Modifier.width(12.dp))
@@ -253,12 +260,45 @@ private val recipes=listOf(
                         Text(r.timing,color=Muted,fontSize=12.sp)
                         Text(r.tags,color=Green,fontSize=11.sp)
                         Text("${r.kcal} kcal · ~₹${r.cost}/serving",color=Muted,fontSize=12.sp)
+                        Text("View recipe",color=Green,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
                     }
-                    IconButton(onClick={scope.launch { if(r.title in savedIds) database.savedRecipeDao().remove(r.title) else database.savedRecipeDao().save(SavedRecipe(r.title)) }}) { Icon(if(r.title in savedIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,if(r.title in savedIds) "Remove saved recipe" else "Save recipe",tint=Green) }
+                    IconButton(onClick={scope.launch { if(r.title in savedIds) database.savedRecipeDao().remove(r.title) else database.savedRecipeDao().save(SavedRecipe(r.title)) }}) {
+                        Icon(if(r.title in savedIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,if(r.title in savedIds) "Remove saved recipe" else "Save recipe",tint=Green)
+                    }
                 }
             }
         }
-        item { if(visibleRecipes.isEmpty()) Text("No recipes match this filter.",color=Muted) }\n        item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
+        item { if(visibleRecipes.isEmpty()) Text("No recipes match this filter.",color=Muted) }
+        item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
+    }
+    selectedRecipe?.let { recipe ->
+        val ingredients = when(recipe.title) {
+            "Banana oats bowl" -> "½ cup oats, 1 banana, ¾ cup milk"
+            "Chickpea rice bowl" -> "¾ cup cooked chickpeas, 1 cup cooked rice, cucumber, lemon"
+            "Peanut banana bites" -> "1 banana, 1 tbsp peanuts"
+            "Moong dal khichdi" -> "¼ cup moong dal, ¼ cup rice, spices, vegetables"
+            else -> "1 roti/wrap, paneer, mixed vegetables, yogurt or chutney"
+        }
+        val steps = when(recipe.title) {
+            "Banana oats bowl" -> "Mix oats and milk; top with sliced banana. Let soften or chill overnight."
+            "Chickpea rice bowl" -> "Warm chickpeas with spices. Serve over rice with cucumber and lemon."
+            "Peanut banana bites" -> "Slice banana and top with crushed peanuts."
+            "Moong dal khichdi" -> "Rinse dal and rice. Simmer with spices and water until soft."
+            else -> "Cook paneer and vegetables with spices. Fill the wrap, roll, and toast briefly."
+        }
+        AlertDialog(
+            onDismissRequest={selectedRecipe=null},
+            title={Text(recipe.title)},
+            text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                Text("${recipe.timing} · ${recipe.kcal} kcal · estimated ₹${recipe.cost}/serving",color=Muted)
+                Text("Ingredients",fontWeight=FontWeight.Bold)
+                Text(ingredients)
+                Text("Method",fontWeight=FontWeight.Bold)
+                Text(steps)
+                Text("Nutrition and cost are estimates; adjust portions and ingredients to your needs.",color=Muted,fontSize=12.sp)
+            }},
+            confirmButton={TextButton(onClick={selectedRecipe=null}){Text("Close")}}
+        )
     }
 }
 @Composable private fun Profile(p:PaddingValues,hostel:Boolean,onHostel:(Boolean)->Unit) {
