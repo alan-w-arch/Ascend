@@ -43,7 +43,7 @@ import java.time.LocalDate
             val savedWeight = prefs[ stringPreferencesKey(key) ] ?: ""
             var weightInput by remember(today) { mutableStateOf(savedWeight) }
             val validWeight = weightInput.toFloatOrNull()?.let { it in 20f..350f } == true
-            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Text("Body weight",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp)
                     Text("Optional daily check-in · kg",color=Muted,fontSize=12.sp)
@@ -98,7 +98,7 @@ import java.time.LocalDate
             }
         }
         item {
-            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Personal details",color=Ink,fontWeight=FontWeight.Bold)
                     ProfileRow("Example goal","Healthy weight management")
@@ -121,7 +121,7 @@ import java.time.LocalDate
             }
         }
         item {
-            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Hostel mode",color=Ink,fontWeight=FontWeight.Bold); Text("Prioritize kettle/no-cook meals and simple equipment.",color=Muted,fontSize=12.sp) }
                     Switch(checked=hostel,onCheckedChange=onHostel)
@@ -129,7 +129,7 @@ import java.time.LocalDate
             }
         }
         item {
-            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Text("Ascend Plus",color=Ink,fontWeight=FontWeight.Bold)
                     Text("Planned: personalized plans, expanded recipes, and expert consultations.",color=Muted)

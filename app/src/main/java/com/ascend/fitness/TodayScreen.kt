@@ -79,7 +79,7 @@ fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
                 Triple(day,m,e)
             }
             val weeklyCheckins=weeklyHistory.mapNotNull { (_,m,e) -> if(m!=null && e!=null) m to e else null }
-            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Daily wellbeing check-in",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp)
                     Text("A quick optional snapshot of how you feel today.",color=Muted,fontSize=12.sp)
@@ -138,7 +138,7 @@ fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
             }
         }
         item {
-            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
                         Column { Text("Water",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp); Text("$waterMl ml / $waterTarget ml",color=Muted,fontSize=12.sp) }

@@ -70,7 +70,7 @@ val recipes=listOf(
         item { if(query.isNotBlank() || savedOnly || highProteinOnly || sortBy != "Recommended") TextButton(onClick={searchQuery="";savedOnly=false;highProteinOnly=false;sortBy="Recommended"}) { Text("Reset filters") } }
         item { if(hostel) Text("Hostel mode: showing no-cook and one-pot options.",color=Muted,fontSize=12.sp) }
         items(visibleRecipes,key={it.title}) { r ->
-            Card(modifier=Modifier.clickable(role=Role.Button,onClick={selectedRecipe=r}),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+            Card(modifier=Modifier.clickable(role=Role.Button,onClick={selectedRecipe=r}),shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically) {
                     Box(Modifier.size(52.dp).background(Mint,RoundedCornerShape(15.dp)),contentAlignment=Alignment.Center){Text(r.emoji,fontSize=26.sp)}
                     Spacer(Modifier.width(12.dp))

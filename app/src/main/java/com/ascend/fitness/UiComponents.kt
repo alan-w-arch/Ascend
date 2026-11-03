@@ -48,7 +48,7 @@ import java.time.LocalDate
     Column { Text(label,color=Color.White.copy(alpha=.8f),fontSize=11.sp); Text(value,color=Color.White,fontWeight=FontWeight.Bold) }
 }
 @Composable fun MealCard(meal:Meal, checked:Boolean, onCheck:()->Unit) {
-    Card(shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=Color.White)) {
+    Card(shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment=Alignment.CenterVertically) {
             Box(Modifier.size(52.dp).background(Mint,RoundedCornerShape(15.dp)),contentAlignment=Alignment.Center) { Text(meal.emoji,fontSize=26.sp) }
             Spacer(Modifier.width(12.dp))

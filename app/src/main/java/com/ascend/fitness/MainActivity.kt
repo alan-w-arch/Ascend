@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -66,7 +67,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
                 listOf("Today", "Plan", "Recipes", "Profile").forEachIndexed { i, label ->
                     val icon = listOf(Icons.Default.Home, Icons.Default.CalendarMonth, Icons.Default.Restaurant, Icons.Default.Person)[i]
                     NavigationBarItem(selected = tab == i, onClick = { tab = i }, icon = { Icon(icon, label) }, label = { Text(label) },
-                        colors = NavigationBarItemDefaults.colors(selectedIconColor = Green, indicatorColor = Mint))
+                        colors = NavigationBarItemDefaults.colors(selectedIconColor = colors.primary, indicatorColor = if (dark) Color(0xFF30483A) else Mint))
                 }
             }
         }) { p ->
