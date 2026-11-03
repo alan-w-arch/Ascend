@@ -149,12 +149,16 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
             }
         }
-        items(allMeals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
-        items(customMeals,key={it.id}) { custom ->
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
-                TextButton(onClick={onRemove(custom)}) {
-                    Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
-                    Text("Remove ${custom.title}",color=Muted)
+        items(allMeals) { meal ->
+            MealCard(meal,done.contains(meal.name)){onDone(meal.name)}
+            if (meal.name.startsWith("custom-")) {
+                val customId = meal.name.removePrefix("custom-").toLongOrNull()
+                val custom = customMeals.firstOrNull { it.id == customId }
+                if (custom != null) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                    TextButton(onClick={onRemove(custom)}) {
+                        Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
+                        Text("Remove ${custom.title}",color=Muted)
+                    }
                 }
             }
         }
