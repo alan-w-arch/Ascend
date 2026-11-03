@@ -7,7 +7,14 @@ plugins {
 android {
  namespace = "com.ascend.fitness"
  compileSdk = 35
- defaultConfig { applicationId = "com.ascend.fitness"; minSdk = 26; targetSdk = 35; versionCode = 2; versionName = "0.2.0" }
+ defaultConfig {
+  applicationId = "com.ascend.fitness"
+  minSdk = 26
+  targetSdk = 35
+  versionCode = 2
+  versionName = "0.2.0"
+  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+ }
  buildFeatures { compose = true }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }
@@ -27,4 +34,7 @@ dependencies {
  kapt("androidx.room:room-compiler:2.6.1")
  implementation("androidx.datastore:datastore-preferences:1.1.1")
  debugImplementation("androidx.compose.ui:ui-tooling")
+ androidTestImplementation("androidx.test.ext:junit:1.2.1")
+ androidTestImplementation("androidx.test:runner:1.6.2")
+ androidTestImplementation("androidx.room:room-testing:2.6.1")
 }
