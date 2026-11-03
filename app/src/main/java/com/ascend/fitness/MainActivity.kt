@@ -217,6 +217,7 @@ private val meals = listOf(
                         Text(" / 2,000 kcal",color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=5.dp))
                     }
                     LinearProgressIndicator(progress={(calories.toFloat()/2000).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(7.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
+                    Text(if (calories <= 2000) "%,d kcal remaining".format(2000 - calories) else "%,d kcal over target".format(calories - 2000), color=Color.White.copy(alpha=.9f), fontSize=12.sp)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                         Macro("Protein","${protein} g")
                         Macro("Carbs","${carbs} g")
