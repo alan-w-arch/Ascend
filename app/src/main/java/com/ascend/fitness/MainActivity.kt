@@ -295,6 +295,7 @@ private val recipes=listOf(
                         Text(r.timing,color=Muted,fontSize=12.sp)
                         Text(r.tags,color=Green,fontSize=11.sp)
                         Text("${r.kcal} kcal · ~₹${r.cost}/serving",color=Muted,fontSize=12.sp)
+                        Text("P ${r.protein}g · C ${r.carbs}g · F ${r.fat}g",color=Green,fontSize=11.sp,fontWeight=FontWeight.SemiBold)
                         Text("View recipe",color=Green,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
                     }
                     IconButton(onClick={scope.launch { if(r.title in savedIds) database.savedRecipeDao().remove(r.title) else database.savedRecipeDao().save(SavedRecipe(r.title)) }}) {
