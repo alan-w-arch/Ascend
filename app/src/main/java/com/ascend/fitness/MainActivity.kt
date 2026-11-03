@@ -247,6 +247,13 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     val send=Intent(Intent.ACTION_SEND).apply { type="text/plain"; putExtra(Intent.EXTRA_SUBJECT,"Ascend meal plan — $dateLabel"); putExtra(Intent.EXTRA_TEXT,text) }
                     context.startActivity(Intent.createChooser(send,"Share meal plan"))
                 }) { Icon(Icons.Default.Share,"Share plan",tint=Green); Text("Share plan") }
+                TextButton(onClick={
+                    val dateLabel=selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy"))
+                    val ingredientLines=allMeals.joinToString("\\n") { meal -> "• ${meal.title}: ${meal.ingredients}" }
+                    val text="Ascend grocery checklist — $dateLabel\\n$ingredientLines\\n\\nIngredient notes are copied from meal entries; quantities may be incomplete. Review portions and pantry stock before shopping."
+                    val send=Intent(Intent.ACTION_SEND).apply { type="text/plain"; putExtra(Intent.EXTRA_SUBJECT,"Grocery list — $dateLabel"); putExtra(Intent.EXTRA_TEXT,text) }
+                    context.startActivity(Intent.createChooser(send,"Share grocery list"))
+                }) { Icon(Icons.Default.ShoppingCart,"Share grocery list",tint=Green); Text("Ingredients") }
                 TextButton(onClick={scope.launch {
                     val previousDate=selectedDate.minusDays(1).toString()
                     val previousMeals=database.customMealDao().getMeals(previousDate)
