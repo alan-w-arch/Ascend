@@ -68,7 +68,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal)
+                0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
                 1 -> Plan(p, database)
                 2 -> Recipes(p, tier, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel, tier) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
@@ -120,7 +120,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
     }
 }
-@Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit) {
+@Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
     var showAdd by remember { mutableStateOf(false) }
     val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     val loggedMeals = allMeals.filter { it.name in done }
@@ -150,6 +150,14 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
             }
         }
         items(allMeals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
+        items(customMeals,key={it.id}) { custom ->
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                TextButton(onClick={onRemove(custom)}) {
+                    Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
+                    Text("Remove ${custom.title}",color=Muted)
+                }
+            }
+        }
         item { Text("Calories update from checked sample meals. Nutrition values are illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
     if (showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={ title,time,ingredients,kcal,protein,carbs,fat ->
