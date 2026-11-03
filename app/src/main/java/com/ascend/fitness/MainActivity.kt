@@ -173,14 +173,15 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     var protein by remember { mutableStateOf("") }
     var carbs by remember { mutableStateOf("") }
     var fat by remember { mutableStateOf("") }
-    val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true
+    val timeValid = runCatching { java.time.LocalTime.parse(time.trim(), java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.US)) }.isSuccess
+    val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true && timeValid
     AlertDialog(
         onDismissRequest=onDismiss,
         title={Text("Add a meal")},
         text={
             Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(value=title,onValueChange={title=it},label={Text("Meal name")},singleLine=true)
-                OutlinedTextField(value=time,onValueChange={time=it},label={Text("Time")},singleLine=true)
+                OutlinedTextField(value=time,onValueChange={time=it},label={Text("Time (e.g. 8:30 AM)")},singleLine=true,isError=time.isNotBlank()&&!timeValid,supportingText={if(time.isNotBlank()&&!timeValid) Text("Enter a time like 8:30 AM")})
                 OutlinedTextField(value=ingredients,onValueChange={ingredients=it},label={Text("Ingredients")},singleLine=true)
                 OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)
                 OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit)},label={Text("Protein (g)")},singleLine=true)
