@@ -308,7 +308,7 @@ private val recipes=listOf(
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Recipe library","Simple, student-friendly meals") }
         item { OutlinedTextField(value=searchQuery,onValueChange={searchQuery=it},modifier=Modifier.fillMaxWidth(),label={Text("Search recipes")},singleLine=true,leadingIcon={Icon(Icons.Default.Search,"Search")},trailingIcon={if(searchQuery.isNotEmpty()) IconButton(onClick={searchQuery=""}) { Icon(Icons.Default.Close,"Clear search") }}) }
-        item { Text("${visibleRecipes.size} recipes",color=Muted,fontSize=12.sp) }
+        item { Text("${visibleRecipes.size} ${if(visibleRecipes.size==1) "recipe" else "recipes"} found",color=Muted,fontSize=12.sp) }
         item { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) { listOf("Recommended","Lowest cost","Lowest calories","Highest protein").forEach { option -> FilterChip(selected=sortBy==option,onClick={sortBy=option},label={Text(option)}) } } }
         item {
             Text("Your budget",color=Ink,fontWeight=FontWeight.SemiBold)
@@ -337,7 +337,7 @@ private val recipes=listOf(
                 }
             }
         }
-        item { if(visibleRecipes.isEmpty()) Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text("No recipes match your current filters.",color=Muted); TextButton(onClick={searchQuery="";savedOnly=false}) { Text("Clear search and filters") } } }
+        item { if(visibleRecipes.isEmpty()) Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text("No recipes match your current filters.",color=Muted); TextButton(onClick={searchQuery="";savedOnly=false}) { Text("Clear search and saved filter") } } }
         item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
     }
     selectedRecipe?.let { recipe ->
