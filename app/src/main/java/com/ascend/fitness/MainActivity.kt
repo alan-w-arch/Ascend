@@ -206,6 +206,8 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         dismissButton={TextButton(onClick=onDismiss){Text("Cancel")}}
     )
 }
+private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val completedMeals:Int,val totalMeals:Int)
+
 @Composable private fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
     val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
@@ -219,6 +221,18 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     var planRecipeServings by remember { mutableIntStateOf(1) }
     var copyFeedback by remember { mutableStateOf<String?>(null) }
     val dateKey = selectedDate.toString()
+    val weekStart = selectedDate.minusDays((selectedDate.dayOfWeek.value-1).toLong())
+    var weekSummary by remember { mutableStateOf<List<WeekDaySummary>>(emptyList()) }
+    LaunchedEffect(weekStart) {
+        weekSummary = (0L..6L).map { offset ->
+            val day = weekStart.plusDays(offset)
+            val dayKey = day.toString()
+            val custom = database.customMealDao().getMeals(dayKey)
+            val completed = database.mealCompletionDao().getCompletedMealIds(dayKey).toSet()
+            val dayMeals = meals + custom.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
+            WeekDaySummary(day,dayMeals.sumOf { it.kcal },dayMeals.count { it.name in completed },dayMeals.size)
+        }
+    }
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
     val scope = rememberCoroutineScope()
@@ -244,7 +258,6 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
             }
         }
         item {
-            val weekStart=selectedDate.minusDays((selectedDate.dayOfWeek.value-1).toLong())
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween,modifier=Modifier.fillMaxWidth()) {
                 IconButton(onClick={selectedDate=selectedDate.minusWeeks(1)}) { Icon(Icons.Default.ChevronLeft,"Previous week",tint=Green) }
                 Text(weekStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))+" – "+weekStart.plusDays(6).format(java.time.format.DateTimeFormatter.ofPattern("MMM d")),fontWeight=FontWeight.SemiBold,color=Ink)
@@ -258,6 +271,36 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                         Column(Modifier.width(42.dp).padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
                             Text(day.format(java.time.format.DateTimeFormatter.ofPattern("EE")),fontSize=11.sp,color=if(selected) Color.White.copy(alpha=.85f) else Muted)
                             Text(day.dayOfMonth.toString(),fontWeight=FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            val weekCalories=weekSummary.sumOf { it.plannedKcal }
+            val weekDone=weekSummary.sumOf { it.completedMeals }
+            val weekMeals=weekSummary.sumOf { it.totalMeals }
+            Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Text("WEEK AT A GLANCE",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                        Column {
+                            Text("%,d".format(weekCalories),fontSize=22.sp,fontWeight=FontWeight.Bold,color=Ink)
+                            Text("planned kcal",fontSize=11.sp,color=Muted)
+                        }
+                        Column(horizontalAlignment=Alignment.End) {
+                            Text("$weekDone / $weekMeals",fontSize=22.sp,fontWeight=FontWeight.Bold,color=Green)
+                            Text("meals completed",fontSize=11.sp,color=Muted)
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp),verticalAlignment=Alignment.Bottom) {
+                        weekSummary.forEach { day ->
+                            Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                                Box(Modifier.fillMaxWidth().height(44.dp),contentAlignment=Alignment.BottomCenter) {
+                                    Box(Modifier.fillMaxWidth().height((44f*(day.completedMeals.toFloat()/day.totalMeals.coerceAtLeast(1))).coerceAtLeast(if(day.completedMeals>0) 4f else 0f).dp).background(Green.copy(alpha=.8f),RoundedCornerShape(4.dp)))
+                                }
+                                Text(day.date.format(java.time.format.DateTimeFormatter.ofPattern("EE")),fontSize=10.sp,color=Muted)
+                            }
                         }
                     }
                 }

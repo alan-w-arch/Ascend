@@ -27,6 +27,9 @@ interface MealCompletionDao {
     @Query("SELECT mealId FROM meal_completions WHERE date = :date")
     fun observeCompletedMealIds(date: String): Flow<List<String>>
 
+    @Query("SELECT mealId FROM meal_completions WHERE date = :date")
+    suspend fun getCompletedMealIds(date: String): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveCompletion(completion: MealCompletion)
 
