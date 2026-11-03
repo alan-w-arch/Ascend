@@ -207,6 +207,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
 @Composable private fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showAdd by remember { mutableStateOf(false) }
+    var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     val dateKey = selectedDate.toString()
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
@@ -274,6 +275,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 val customId=meal.name.removePrefix("custom-").toLongOrNull()
                 val custom=customMeals.firstOrNull { it.id==customId }
                 if(custom!=null) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                    TextButton(onClick={editingMeal=custom}) { Icon(Icons.Default.Edit,"Edit meal",tint=Muted); Text("Edit",color=Muted) }
                     TextButton(onClick={scope.launch { database.mealCompletionDao().removeCompletion(dateKey,"custom-${custom.id}"); database.customMealDao().delete(custom) }}) {
                         Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
                         Text("Remove",color=Muted)
@@ -289,6 +291,12 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         showAdd=false
     })
+    editingMeal?.let { meal -> AddMealDialog(initialMeal=meal,onDismiss={editingMeal=null},onSave={title,time,ingredients,kcal,protein,carbs,fat ->
+        scope.launch {
+            database.customMealDao().update(meal.copy(title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat))
+        }
+        editingMeal=null
+    }) }
 }
 private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String,val protein:Int,val carbs:Int,val fat:Int)
 private val recipes=listOf(
