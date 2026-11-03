@@ -229,7 +229,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                         Macro("Carbs","${carbs} g")
                         Macro("Fat"," ${fat} g")
                     }
-                    Text("${loggedMeals.size} of ${allMeals.size} meals completed",color=Color.White.copy(alpha=.9f),fontSize=12.sp)
+                    Text("${loggedMeals.size} of ${allMeals.size} meals completed · ${allMeals.sumOf { it.kcal }} kcal planned",color=Color.White.copy(alpha=.9f),fontSize=12.sp)
                 }
             }
         }
