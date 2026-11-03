@@ -71,7 +71,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
                 0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal)
                 1 -> Plan(p, database)
                 2 -> Recipes(p, tier, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
-                else -> Profile(p, hostel) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
+                else -> Profile(p, hostel, tier) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
             }
         }
     }
@@ -364,7 +364,7 @@ private val recipes=listOf(
         )
     }
 }
-@Composable private fun Profile(p:PaddingValues,hostel:Boolean,onHostel:(Boolean)->Unit) {
+@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,onHostel:(Boolean)->Unit) {
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Your profile","Preferences for a plan that fits your life") }
         item {
@@ -375,6 +375,7 @@ private val recipes=listOf(
                     ProfileRow("Daily energy target","2,000 kcal")
                     ProfileRow("Diet","Vegetarian")
                     ProfileRow("Budget","Budget · ₹50/meal")
+                    ProfileRow("Recipe tier",tier)
                 }
             }
         }
