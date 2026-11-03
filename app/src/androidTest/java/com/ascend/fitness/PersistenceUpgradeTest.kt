@@ -51,6 +51,20 @@ class PersistenceUpgradeTest {
         assertEquals(inserted.protein, stored.protein)
         assertEquals(inserted.carbs, stored.carbs)
         assertEquals(inserted.fat, stored.fat)
+
+        // Editing a meal can assign it to another plan date without losing its ID or macros.
+        val moved = stored.copy(date = "2026-01-16", title = "Updated meal")
+        database.customMealDao().update(moved)
+        assertEquals(emptyList<CustomMeal>(), database.customMealDao().getMeals("2026-01-15"))
+        assertEquals("Updated meal", database.customMealDao().getMeals("2026-01-16").single().title)
+
+        // Completion is date-scoped and custom meal completion can be toggled independently.
+        database.mealCompletionDao().saveCompletion(MealCompletion("2026-01-16", "custom-${stored.id}"))
+        assertEquals(listOf("custom-${stored.id}"), database.mealCompletionDao().getCompletedMealIds("2026-01-16"))
+        assertEquals(listOf("breakfast"), database.mealCompletionDao().getCompletedMealIds("2026-01-15"))
+        database.mealCompletionDao().removeCompletion("2026-01-16", "custom-${stored.id}")
+        database.customMealDao().delete(moved)
+        assertEquals(emptyList<CustomMeal>(), database.customMealDao().getMeals("2026-01-16"))
         database.close()
     }
 
