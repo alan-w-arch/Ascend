@@ -65,7 +65,16 @@ class PersistenceUpgradeTest {
         database.mealCompletionDao().removeCompletion("2026-01-16", "custom-${stored.id}")
         database.customMealDao().delete(moved)
         assertEquals(emptyList<CustomMeal>(), database.customMealDao().getMeals("2026-01-16"))
+
+        // Saved recipes are durable independently of date-specific meal planning.
+        database.savedRecipeDao().save(SavedRecipe("Banana oats bowl"))
+        assertEquals(listOf("Banana oats bowl"), database.savedRecipeDao().observeSavedRecipeIds().first())
         database.close()
+
+        val reopenedDatabase = AscendDatabase.getInstance(context)
+        assertEquals(listOf("Banana oats bowl"), reopenedDatabase.savedRecipeDao().observeSavedRecipeIds().first())
+        reopenedDatabase.savedRecipeDao().remove("Banana oats bowl")
+        reopenedDatabase.close()
     }
 
     @Test

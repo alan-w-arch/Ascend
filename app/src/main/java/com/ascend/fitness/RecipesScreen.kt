@@ -79,6 +79,7 @@ private val recipes=listOf(
                         Text(r.tags,color=Green,fontSize=11.sp)
                         Text("${r.kcal} kcal · ~₹${r.cost}/serving",color=Muted,fontSize=12.sp)
                         Text("P ${r.protein}g · C ${r.carbs}g · F ${r.fat}g",color=Green,fontSize=11.sp,fontWeight=FontWeight.SemiBold)
+                        Text("Sample nutrition estimate · not verified",color=Muted,fontSize=10.sp)
                         Text("View recipe",color=Green,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
                     }
                     IconButton(onClick={scope.launch { if(r.title in savedIds) database.savedRecipeDao().remove(r.title) else database.savedRecipeDao().save(SavedRecipe(r.title)) }}) {
@@ -115,6 +116,7 @@ private val recipes=listOf(
                 Slider(value=servings.toFloat(),onValueChange={servings=it.toInt()},valueRange=1f..5f,steps=3)
                 Text("Per serving: ${recipe.kcal} kcal · P ${recipe.protein}g · C ${recipe.carbs}g · F ${recipe.fat}g",color=Green,fontWeight=FontWeight.SemiBold)
                 Text("Total: P ${recipe.protein * servings}g · C ${recipe.carbs * servings}g · F ${recipe.fat * servings}g",color=Green,fontWeight=FontWeight.SemiBold)
+                Text("Sample estimate · not verified against exact ingredients or portions",color=Muted,fontSize=11.sp)
                 Text("Ingredients (per serving)",fontWeight=FontWeight.Bold)
                 Text(ingredients)
                 Text("Method",fontWeight=FontWeight.Bold)
