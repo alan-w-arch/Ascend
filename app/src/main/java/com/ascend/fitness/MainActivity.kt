@@ -129,7 +129,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     val protein = loggedMeals.sumOf { it.protein }
     val carbs = loggedMeals.sumOf { it.carbs }
     val fat = loggedMeals.sumOf { it.fat }
-    val target = 2000
+    // Daily target is provided by the saved profile preference.
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header(when (java.time.LocalTime.now().hour) { in 5..11 -> "Good morning"; in 12..16 -> "Good afternoon"; else -> "Good evening" },"Your plan for today") }
         item {
@@ -234,7 +234,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     Text("DAILY PROGRESS",color=Color.White.copy(alpha=.8f),fontSize=12.sp,fontWeight=FontWeight.Bold)
                     Row(verticalAlignment=Alignment.Bottom) {
                         Text("%,d".format(calories),color=Color.White,fontSize=30.sp,fontWeight=FontWeight.Bold)
-                        Text(" / 2,000 kcal",color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=5.dp))
+                        Text(" / %,d kcal".format(target),color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=5.dp))
                     }
                     LinearProgressIndicator(progress={(calories.toFloat()/target.coerceAtLeast(1)).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(7.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
                     Text(if (calories <= target) "%,d kcal remaining".format(target - calories) else "%,d kcal over target".format(calories - target), color=Color.White.copy(alpha=.9f), fontSize=12.sp)
