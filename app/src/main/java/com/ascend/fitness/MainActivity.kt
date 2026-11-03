@@ -680,6 +680,37 @@ private val recipes=listOf(
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Your profile","Preferences for a plan that fits your life") }
         item {
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val prefs by context.ascendPreferences.data.collectAsState(initial=androidx.datastore.preferences.core.emptyPreferences())
+            val today = LocalDate.now()
+            val key = "weight_kg_$today"
+            val savedWeight = prefs[ stringPreferencesKey(key) ] ?: ""
+            var weightInput by remember(today) { mutableStateOf(savedWeight) }
+            val validWeight = weightInput.toFloatOrNull()?.let { it in 20f..350f } == true
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+                Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Text("Body weight",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp)
+                    Text("Optional daily check-in · kg",color=Muted,fontSize=12.sp)
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value=weightInput,onValueChange={ weightInput=it.filter { c -> c.isDigit() || c=='.' }.take(6) },modifier=Modifier.weight(1f),label={Text("Weight (kg)")},singleLine=true,isError=weightInput.isNotBlank()&&!validWeight)
+                        Button(enabled=validWeight,onClick={ scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey(key)] = String.format(java.util.Locale.US,"%.1f",weightInput.toFloat()) } } }) { Text("Save") }
+                    }
+                    Text("Enter 20–350 kg. Weight entries stay on this device and are for personal tracking, not diagnosis.",color=Muted,fontSize=11.sp)
+                    Divider()
+                    Text("Last 7 days",color=Ink,fontWeight=FontWeight.SemiBold)
+                    (6 downTo 0).forEach { offset ->
+                        val day=today.minusDays(offset.toLong())
+                        val value=prefs[stringPreferencesKey("weight_kg_$day")]
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                            Text(day.format(java.time.format.DateTimeFormatter.ofPattern("EEE, MMM d")),color=Muted,fontSize=12.sp)
+                            Text(if(value.isNullOrBlank()) "—" else "$value kg",color=if(value.isNullOrBlank()) Muted else Ink,fontWeight=FontWeight.Medium,fontSize=12.sp)
+                        }
+                    }
+                }
+            }
+        }
+        item {
             Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Personal details",color=Ink,fontWeight=FontWeight.Bold)
