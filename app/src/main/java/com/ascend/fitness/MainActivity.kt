@@ -303,7 +303,7 @@ private val recipes=listOf(
     var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
     val maxCost = when(tier) { "Budget" -> 50; "Standard" -> 75; else -> Int.MAX_VALUE }
     val query = searchQuery.trim()
-    val filteredRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) && (!hostel || it.timing.contains("No cook") || it.timing.contains("One pot")) && (query.isBlank() || it.title.contains(query, ignoreCase=true) || it.tags.contains(query, ignoreCase=true) || it.timing.contains(query, ignoreCase=true)) }
+    val filteredRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) && (!hostel || it.timing.contains("No cook") || it.timing.contains("One pot")) && (query.isBlank() || query.split(" ").filter { term -> term.isNotBlank() }.all { term -> it.title.contains(term, ignoreCase=true) || it.tags.contains(term, ignoreCase=true) || it.timing.contains(term, ignoreCase=true) }) }
     val visibleRecipes = when(sortBy) { "Lowest cost" -> filteredRecipes.sortedBy { it.cost }; "Lowest calories" -> filteredRecipes.sortedBy { it.kcal }; "Highest protein" -> filteredRecipes.sortedByDescending { it.protein }; else -> filteredRecipes }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Recipe library","Simple, student-friendly meals") }
