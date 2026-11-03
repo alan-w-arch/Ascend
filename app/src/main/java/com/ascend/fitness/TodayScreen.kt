@@ -31,14 +31,14 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 
-data class Meal(val name:String, val time:String, val title:String, val ingredients:String, val kcal:Int, val emoji:String, val protein:Int=0, val carbs:Int=0, val fat:Int=0)
-val meals = listOf(
+private data class Meal(val name:String, val time:String, val title:String, val ingredients:String, val kcal:Int, val emoji:String, val protein:Int=0, val carbs:Int=0, val fat:Int=0)
+private val meals = listOf(
     Meal("Breakfast","8:00 AM","Banana oats bowl","Oats · banana · milk",380,"🥣",14,62,9),
     Meal("Lunch","1:00 PM","Chickpea rice bowl","Chickpeas · rice · cucumber",520,"🍛",18,88,8),
     Meal("Snack","4:30 PM","Peanut banana bites","Banana · peanuts",180,"🍌",5,27,8),
     Meal("Dinner","8:00 PM","Moong dal khichdi","Moong dal · rice · spices",420,"🍲",17,72,7)
 )
-fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
+private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
     runCatching { java.time.LocalTime.parse(meal.time, java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(java.util.Locale.US)).toSecondOfDay() }
         .getOrDefault(Int.MAX_VALUE)
 }

@@ -33,6 +33,7 @@ import java.time.LocalDate
 
 private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val completedMeals:Int,val totalMeals:Int)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
     val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
