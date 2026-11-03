@@ -199,6 +199,7 @@ private val meals = listOf(
                         Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE")),color=Ink,fontWeight=FontWeight.Bold)
                         Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy")),color=Muted)
                         if(selectedDate==LocalDate.now()) Text("Today",color=Green,fontSize=12.sp)
+                        else TextButton(onClick={selectedDate=LocalDate.now()}) { Text("Today",color=Green) }
                     }
                     IconButton(onClick={selectedDate=selectedDate.plusDays(1)}) { Icon(Icons.Default.ChevronRight,"Next day") }
                 }
