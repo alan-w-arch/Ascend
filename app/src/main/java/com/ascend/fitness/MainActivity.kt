@@ -316,7 +316,7 @@ private val recipes=listOf(
                 listOf("Budget","Standard","Premium").forEach { FilterChip(selected=tier==it,onClick={onTier(it)},label={Text(it)}) }
             }
         }
-        item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes")}) }
+        item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes (${savedIds.size})")}) }
         item { if(hostel) Text("Hostel mode: showing no-cook and one-pot options.",color=Muted,fontSize=12.sp) }
         items(visibleRecipes,key={it.title}) { r ->
             Card(modifier=Modifier.clickable { selectedRecipe=r },shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
