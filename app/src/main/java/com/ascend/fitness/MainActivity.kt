@@ -401,7 +401,7 @@ private val recipes=listOf(
             Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Personal details",color=Ink,fontWeight=FontWeight.Bold)
-                    ProfileRow("Goal","Healthy weight management")
+                    ProfileRow("Example goal","Healthy weight management")
                     ProfileRow("Daily energy target","%,d kcal".format(target))
                     ProfileRow("Diet","Vegetarian")
                     ProfileRow("Budget",when(tier) { "Budget" -> "Up to ₹50/meal"; "Standard" -> "Up to ₹75/meal"; else -> "Flexible" })
