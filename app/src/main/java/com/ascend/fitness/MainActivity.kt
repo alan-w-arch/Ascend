@@ -208,6 +208,9 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showAdd by remember { mutableStateOf(false) }
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
+    var showRecipePicker by remember { mutableStateOf(false) }
+    var selectedPlanRecipe by remember { mutableStateOf<Recipe?>(null) }
+    var planRecipeServings by remember { mutableIntStateOf(1) }
     val dateKey = selectedDate.toString()
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
@@ -259,7 +262,8 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         item {
             Row(verticalAlignment=Alignment.CenterVertically) {
                 Section("Meals for this day"," ${allMeals.size} meals")
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(4.dp))
+                TextButton(onClick={showRecipePicker=true}) { Icon(Icons.Default.Restaurant,"Add recipe",tint=Green); Text("Recipe") }
                 IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
             }
         }
@@ -297,6 +301,44 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         editingMeal=null
     }) }
+    if(showRecipePicker) AlertDialog(
+        onDismissRequest={showRecipePicker=false},
+        title={Text("Add a recipe to ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}")},
+        text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            recipes.forEach { recipe ->
+                OutlinedButton(onClick={showRecipePicker=false;selectedPlanRecipe=recipe;planRecipeServings=1},modifier=Modifier.fillMaxWidth()) {
+                    Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.Start) {
+                        Text(recipe.title,color=Ink,fontWeight=FontWeight.SemiBold)
+                        Text("${recipe.kcal} kcal · ~₹${recipe.cost}/serving",color=Muted,fontSize=12.sp)
+                    }
+                }
+            }
+        }},
+        confirmButton={TextButton(onClick={showRecipePicker=false}){Text("Close")}}
+    )
+    selectedPlanRecipe?.let { recipe -> AlertDialog(
+        onDismissRequest={selectedPlanRecipe=null},
+        title={Text("Add ${recipe.title}")},
+        text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Text("For ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern(\"EEEE, MMM d\"))}",color=Muted)
+            Text("Servings: $planRecipeServings",fontWeight=FontWeight.SemiBold)
+            Slider(value=planRecipeServings.toFloat(),onValueChange={planRecipeServings=it.toInt()},valueRange=1f..5f,steps=3)
+            Text("${recipe.kcal*planRecipeServings} kcal · P ${recipe.protein*planRecipeServings}g · C ${recipe.carbs*planRecipeServings}g · F ${recipe.fat*planRecipeServings}g",color=Green,fontWeight=FontWeight.SemiBold)
+            Text("Estimated cost: ₹${recipe.cost*planRecipeServings}",color=Muted)
+        }},
+        confirmButton={TextButton(onClick={
+            val ingredients=when(recipe.title) {
+                "Banana oats bowl" -> "½ cup oats, 1 banana, ¾ cup milk"
+                "Chickpea rice bowl" -> "¾ cup cooked chickpeas, 1 cup cooked rice, cucumber, lemon"
+                "Peanut banana bites" -> "1 banana, 1 tbsp peanuts"
+                "Moong dal khichdi" -> "¼ cup moong dal, ¼ cup rice, spices, vegetables"
+                else -> "1 roti/wrap, paneer, mixed vegetables, yogurt or chutney"
+            }
+            scope.launch { database.customMealDao().insert(CustomMeal(date=dateKey,title=if(planRecipeServings==1) recipe.title else "${recipe.title} · $planRecipeServings servings",time="Any time",ingredients="$planRecipeServings serving(s): $ingredients",kcal=recipe.kcal*planRecipeServings,protein=recipe.protein*planRecipeServings,carbs=recipe.carbs*planRecipeServings,fat=recipe.fat*planRecipeServings)) }
+            selectedPlanRecipe=null
+        }){Text("Add to plan")}},
+        dismissButton={TextButton(onClick={selectedPlanRecipe=null}){Text("Cancel")}}
+    ) }
 }
 private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String,val protein:Int,val carbs:Int,val fat:Int)
 private val recipes=listOf(
