@@ -165,7 +165,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 }
             }
         }
-        item { Text("Calories update from checked sample meals. Nutrition values are illustrative, not verified.",color=Muted,fontSize=11.sp) }
+        item { Text("Sample meal nutrition is illustrative, not verified. Custom meal values are user-entered.",color=Muted,fontSize=11.sp) }
     }
     if (showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={ title,time,ingredients,kcal,protein,carbs,fat ->
         onAdd(CustomMeal(date=LocalDate.now().toString(),title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat))
