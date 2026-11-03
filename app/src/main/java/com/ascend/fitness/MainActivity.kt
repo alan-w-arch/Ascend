@@ -424,7 +424,7 @@ private val recipes=listOf(
             Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Text("Ascend Plus",color=Ink,fontWeight=FontWeight.Bold)
-                    Text("Personalized plans, expanded recipes, and expert consultations.",color=Muted)
+                    Text("Planned: personalized plans, expanded recipes, and expert consultations.",color=Muted)
                     Button(onClick={},enabled=false,modifier=Modifier.fillMaxWidth()){Text("Membership coming soon · ₹99/month")}
                 }
             }
