@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -307,7 +309,7 @@ private val recipes=listOf(
         item { Header("Recipe library","Simple, student-friendly meals") }
         item { OutlinedTextField(value=searchQuery,onValueChange={searchQuery=it},modifier=Modifier.fillMaxWidth(),label={Text("Search recipes")},singleLine=true,leadingIcon={Icon(Icons.Default.Search,"Search")},trailingIcon={if(searchQuery.isNotEmpty()) IconButton(onClick={searchQuery=""}) { Icon(Icons.Default.Close,"Clear search") }}) }
         item { Text("${visibleRecipes.size} recipes",color=Muted,fontSize=12.sp) }
-        item { Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) { listOf("Recommended","Lowest cost","Lowest calories","Highest protein").forEach { option -> FilterChip(selected=sortBy==option,onClick={sortBy=option},label={Text(option)}) } } }
+        item { Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) { listOf("Recommended","Lowest cost","Lowest calories","Highest protein").forEach { option -> FilterChip(selected=sortBy==option,onClick={sortBy=option},label={Text(option)}) } } }
         item {
             Text("Your budget",color=Ink,fontWeight=FontWeight.SemiBold)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.padding(top=8.dp)) {
