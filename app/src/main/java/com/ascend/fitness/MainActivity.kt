@@ -204,6 +204,29 @@ private val meals = listOf(
             }
         }
         item {
+            val loggedMeals = allMeals.filter { it.name in completed }
+            val calories = loggedMeals.sumOf { it.kcal }
+            val protein = loggedMeals.sumOf { it.protein }
+            val carbs = loggedMeals.sumOf { it.carbs }
+            val fat = loggedMeals.sumOf { it.fat }
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=Green)) {
+                Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Text("DAILY PROGRESS",color=Color.White.copy(alpha=.8f),fontSize=12.sp,fontWeight=FontWeight.Bold)
+                    Row(verticalAlignment=Alignment.Bottom) {
+                        Text("%,d".format(calories),color=Color.White,fontSize=30.sp,fontWeight=FontWeight.Bold)
+                        Text(" / 2,000 kcal",color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=5.dp))
+                    }
+                    LinearProgressIndicator(progress={(calories.toFloat()/2000).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(7.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                        Macro("Protein","${protein} g")
+                        Macro("Carbs","${carbs} g")
+                        Macro("Fat"," ${fat} g")
+                    }
+                    Text("${completed.size} of ${allMeals.size} meals completed",color=Color.White.copy(alpha=.9f),fontSize=12.sp)
+                }
+            }
+        }
+        item {
             Row(verticalAlignment=Alignment.CenterVertically) {
                 Section("Meals for this day"," ${allMeals.size} meals")
                 Spacer(Modifier.width(8.dp))
