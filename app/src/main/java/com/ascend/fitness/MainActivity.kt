@@ -71,7 +71,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             when(tab) {
                 0 -> Today(p, calorieTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
                 1 -> Plan(p, database, calorieTarget)
-                2 -> Recipes(p, tier, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
+                2 -> Recipes(p, tier, hostel, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel, tier, calorieTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } })
             }
         }
@@ -292,13 +292,13 @@ private val recipes=listOf(
     Recipe("Moong dal khichdi","20 min · One pot",420,36,"Comfort food · Dinner","🍲",17,72,7),
     Recipe("Paneer veggie wrap","12 min · Pan",460,72,"Vegetarian · Lunch","🌯",22,48,18)
 )
-@Composable private fun Recipes(p:PaddingValues,tier:String,database:AscendDatabase,onTier:(String)->Unit) {
+@Composable private fun Recipes(p:PaddingValues,tier:String,hostel:Boolean,database:AscendDatabase,onTier:(String)->Unit) {
     val scope = rememberCoroutineScope()
     val savedIds by database.savedRecipeDao().observeSavedRecipeIds().collectAsState(initial=emptyList())
     var savedOnly by remember { mutableStateOf(false) }
     var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
     val maxCost = when(tier) { "Budget" -> 50; "Standard" -> 75; else -> Int.MAX_VALUE }
-    val visibleRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) }
+    val visibleRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) && (!hostel || it.timing.contains("No cook") || it.timing.contains("One pot")) }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Recipe library","Simple, student-friendly meals") }
         item {
@@ -308,6 +308,7 @@ private val recipes=listOf(
             }
         }
         item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text("Saved recipes")}) }
+        item { if(hostel) Text("Hostel mode: showing no-cook and one-pot options.",color=Muted,fontSize=12.sp) }
         items(visibleRecipes,key={it.title}) { r ->
             Card(modifier=Modifier.clickable { selectedRecipe=r },shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically) {
