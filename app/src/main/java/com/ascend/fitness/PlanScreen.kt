@@ -196,10 +196,10 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
                 TextButton(onClick={scope.launch {
                     val previousDate=selectedDate.minusDays(1).toString()
                     val previousMeals=database.customMealDao().getMeals(previousDate)
-                    if(previousMeals.isEmpty()) copyFeedback="No custom meals were saved for ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}."
+                    if(previousMeals.isEmpty()) copyFeedback="No custom meals were saved for ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))}."
                     else {
                         previousMeals.forEach { meal -> database.customMealDao().insert(meal.copy(id=0,date=dateKey)) }
-                        copyFeedback="Copied ${previousMeals.size} custom ${if(previousMeals.size==1) "meal" else "meals"} from ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}. Existing meals were kept."
+                        copyFeedback="Copied ${previousMeals.size} custom ${if(previousMeals.size==1) "meal" else "meals"} from ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))}. Existing meals were kept."
                     }
                 }}) { Icon(Icons.Default.ContentCopy,"Copy previous day",tint=Green); Text("Copy previous day") }
             }
@@ -305,7 +305,7 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
     }) }
     if(showRecipePicker) AlertDialog(
         onDismissRequest={showRecipePicker=false},
-        title={Text("Add a recipe to ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}")},
+        title={Text("Add a recipe to ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))}")},
         text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
             recipes.forEach { recipe ->
                 OutlinedButton(onClick={showRecipePicker=false;selectedPlanRecipe=recipe;planRecipeServings=1},modifier=Modifier.fillMaxWidth()) {
@@ -323,7 +323,7 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
         onDismissRequest={selectedPlanRecipe=null},
         title={Text("Add ${recipe.title}")},
         text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            Text("For ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern(\"EEEE, MMM d\"))}",color=Muted)
+            Text("For ${selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMM d"))}",color=Muted)
             Text("Servings: $planRecipeServings",fontWeight=FontWeight.SemiBold)
             Slider(value=planRecipeServings.toFloat(),onValueChange={planRecipeServings=it.toInt()},valueRange=1f..5f,steps=3)
             Text("${recipe.kcal*planRecipeServings} kcal · P ${recipe.protein*planRecipeServings}g · C ${recipe.carbs*planRecipeServings}g · F ${recipe.fat*planRecipeServings}g",color=Green,fontWeight=FontWeight.SemiBold)
