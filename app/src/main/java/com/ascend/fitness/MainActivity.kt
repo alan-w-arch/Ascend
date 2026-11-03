@@ -317,6 +317,7 @@ private val recipes=listOf(
             }
         }
         item { FilterChip(selected=savedOnly,onClick={savedOnly=!savedOnly},label={Text(if(savedOnly) "Saved only" else "Saved recipes (${savedIds.size})")}) }
+        item { if(query.isNotBlank() || savedOnly || sortBy != "Recommended") TextButton(onClick={searchQuery="";savedOnly=false;sortBy="Recommended"}) { Text("Reset filters") } }
         item { if(hostel) Text("Hostel mode: showing no-cook and one-pot options.",color=Muted,fontSize=12.sp) }
         items(visibleRecipes,key={it.title}) { r ->
             Card(modifier=Modifier.clickable { selectedRecipe=r },shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
