@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 
-private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String,val protein:Int,val carbs:Int,val fat:Int)
-private val recipes=listOf(
+data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String,val protein:Int,val carbs:Int,val fat:Int)
+val recipes=listOf(
     Recipe("Banana oats bowl","5 min · No cook",380,32,"Hostel-friendly · Breakfast","🥣",14,62,9),
     Recipe("Chickpea rice bowl","15 min · One pot",520,48,"High protein · Lunch","🍛",18,88,8),
     Recipe("Peanut banana bites","3 min · No cook",180,18,"Snack · No cook","🍌",5,27,8),
