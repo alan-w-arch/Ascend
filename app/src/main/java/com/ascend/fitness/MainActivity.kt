@@ -50,6 +50,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     val preferences by context.ascendPreferences.data.collectAsState(initial = androidx.datastore.preferences.core.emptyPreferences())
     val hostel = preferences[booleanPreferencesKey("hostel_mode")] ?: true
     val tier = preferences[stringPreferencesKey("recipe_tier")] ?: "Budget"
+    val calorieTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] ?: 2000
     fun toggleMeal(mealId: String) {
         scope.launch {
             val dao = database.mealCompletionDao()
@@ -68,10 +69,10 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
-                1 -> Plan(p, database)
+                0 -> Today(p, calorieTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
+                1 -> Plan(p, database, calorieTarget)
                 2 -> Recipes(p, tier, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
-                else -> Profile(p, hostel, tier) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
+                else -> Profile(p, hostel, tier, calorieTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } })
             }
         }
     }
@@ -120,7 +121,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
     }
 }
-@Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
+@Composable private fun Today(p:PaddingValues, target:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
     var showAdd by remember { mutableStateOf(false) }
     val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     val loggedMeals = allMeals.filter { it.name in done }
@@ -197,7 +198,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         dismissButton={TextButton(onClick=onDismiss){Text("Cancel")}}
     )
 }
-@Composable private fun Plan(p:PaddingValues,database:AscendDatabase) {
+@Composable private fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showAdd by remember { mutableStateOf(false) }
     val dateKey = selectedDate.toString()
@@ -235,8 +236,8 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                         Text("%,d".format(calories),color=Color.White,fontSize=30.sp,fontWeight=FontWeight.Bold)
                         Text(" / 2,000 kcal",color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=5.dp))
                     }
-                    LinearProgressIndicator(progress={(calories.toFloat()/2000).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(7.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
-                    Text(if (calories <= 2000) "%,d kcal remaining".format(2000 - calories) else "%,d kcal over target".format(calories - 2000), color=Color.White.copy(alpha=.9f), fontSize=12.sp)
+                    LinearProgressIndicator(progress={(calories.toFloat()/target.coerceAtLeast(1)).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(7.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
+                    Text(if (calories <= target) "%,d kcal remaining".format(target - calories) else "%,d kcal over target".format(calories - target), color=Color.White.copy(alpha=.9f), fontSize=12.sp)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                         Macro("Protein","${protein} g")
                         Macro("Carbs","${carbs} g")
@@ -381,7 +382,7 @@ private val recipes=listOf(
         )
     }
 }
-@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,onHostel:(Boolean)->Unit) {
+@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,target:Int,onHostel:(Boolean)->Unit,onTarget:(Int)->Unit) {
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Your profile","Preferences for a plan that fits your life") }
         item {
@@ -389,10 +390,13 @@ private val recipes=listOf(
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Personal details",color=Ink,fontWeight=FontWeight.Bold)
                     ProfileRow("Goal","Healthy weight management")
-                    ProfileRow("Daily energy target","2,000 kcal")
+                    ProfileRow("Daily energy target","%,d kcal".format(target))
                     ProfileRow("Diet","Vegetarian")
                     ProfileRow("Budget",when(tier) { "Budget" -> "Up to ₹50/meal"; "Standard" -> "Up to ₹75/meal"; else -> "Flexible" })
                     ProfileRow("Recipe tier",tier)
+                    Text("Daily calorie target",color=Muted,fontSize=12.sp)
+                    Slider(value=target.toFloat(),onValueChange={ onTarget(it.toInt()) },valueRange=1000f..4000f,steps=29)
+                    Text("Adjust from 1,000 to 4,000 kcal",color=Muted,fontSize=11.sp)
                 }
             }
         }
