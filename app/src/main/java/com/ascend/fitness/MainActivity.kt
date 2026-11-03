@@ -340,7 +340,7 @@ private val recipes=listOf(
             }
         }
         item { if(visibleRecipes.isEmpty()) Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text("No recipes match your current filters.",color=Muted); TextButton(onClick={searchQuery="";savedOnly=false;sortBy="Recommended"}) { Text("Clear search and filters") } } }
-        item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
+        item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified; check ingredient labels and serving sizes.",color=Muted,fontSize=11.sp) }
     }
     selectedRecipe?.let { recipe ->
         val ingredients = when(recipe.title) {
