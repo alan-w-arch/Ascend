@@ -129,6 +129,15 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
 @Composable private fun Today(p:PaddingValues, target:Int, proteinTarget:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onUpdate:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     var showAdd by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val waterPreferences by context.ascendPreferences.data.collectAsState(initial=androidx.datastore.preferences.core.emptyPreferences())
+    val waterKey = "water_ml_${LocalDate.now()}"
+    val waterMl = waterPreferences[androidx.datastore.preferences.core.intPreferencesKey(waterKey)] ?: 0
+    val waterTarget = waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("water_target_ml")] ?: 2000
+    val waterScope = rememberCoroutineScope()
+    fun updateWater(delta: Int) {
+        waterScope.launch { context.ascendPreferences.edit { prefs -> prefs[androidx.datastore.preferences.core.intPreferencesKey(waterKey)] = (waterMl + delta).coerceAtLeast(0) } }
+    }
     val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     val loggedMeals = allMeals.filter { it.name in done }
     val consumed = loggedMeals.sumOf { it.kcal }
@@ -150,6 +159,22 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     LinearProgressIndicator(progress={(protein.toFloat()/proteinTarget).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(6.dp),color=Color(0xFFFFD166),trackColor=Color.White.copy(alpha=.25f))
                     Text(if(protein>=proteinTarget) "Protein target reached" else "${proteinTarget-protein} g protein to goal",color=Color.White.copy(alpha=.85f),fontSize=11.sp)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Macro("Protein","${protein} g"); Macro("Carbs","${carbs} g"); Macro("Fat","${fat} g") }
+                }
+            }
+        }
+        item {
+            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+                        Column { Text("Water",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp); Text("$waterMl ml / $waterTarget ml",color=Muted,fontSize=12.sp) }
+                        Text("${(waterMl.toFloat()/waterTarget*100).toInt().coerceAtMost(999)}%",color=Green,fontWeight=FontWeight.Bold)
+                    }
+                    LinearProgressIndicator(progress={(waterMl.toFloat()/waterTarget).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Green,trackColor=Mint)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick={updateWater(-250)},enabled=waterMl>0,modifier=Modifier.weight(1f)) { Text("−250 ml") }
+                        Button(onClick={updateWater(250)},modifier=Modifier.weight(1f)) { Text("+250 ml") }
+                    }
+                    Text("Hydration tracking is a simple reminder; individual fluid needs vary.",color=Muted,fontSize=11.sp)
                 }
             }
         }
