@@ -20,6 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 private val Green = Color(0xFF287A55)
 private val Mint = Color(0xFFE7F3EB)
@@ -30,16 +35,27 @@ private val Muted = Color(0xFF6C786F)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { AscendApp() }
+        setContent { AscendApp(applicationContext, AscendDatabase.getInstance(applicationContext)) }
     }
 }
 
 @Composable
-fun AscendApp() {
+fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     var tab by remember { mutableIntStateOf(0) }
-    var hostel by remember { mutableStateOf(true) }
-    var tier by remember { mutableStateOf("Budget") }
-    var done by remember { mutableStateOf(setOf<String>()) }
+    val scope = rememberCoroutineScope()
+    val today = LocalDate.now().toString()
+    val completedIds by database.mealCompletionDao().observeCompletedMealIds(today).collectAsState(initial = emptyList())
+    val done = completedIds.toSet()
+    val preferences by context.ascendPreferences.data.collectAsState(initial = androidx.datastore.preferences.core.emptyPreferences())
+    val hostel = preferences[booleanPreferencesKey("hostel_mode")] ?: true
+    val tier = preferences[stringPreferencesKey("recipe_tier")] ?: "Budget"
+    fun toggleMeal(mealId: String) {
+        scope.launch {
+            val dao = database.mealCompletionDao()
+            if (mealId in done) dao.removeCompletion(today, mealId)
+            else dao.saveCompletion(MealCompletion(date = today, mealId = mealId))
+        }
+    }
     MaterialTheme(colorScheme = lightColorScheme(primary = Green, background = Canvas, surface = Color.White)) {
         Scaffold(containerColor = Canvas, bottomBar = {
             NavigationBar(containerColor = Color.White) {
@@ -51,10 +67,10 @@ fun AscendApp() {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, done) { done = done + it }
-                1 -> Plan(p, done) { done = done + it }
-                2 -> Recipes(p, tier) { tier = it }
-                else -> Profile(p, hostel) { hostel = it }
+                0 -> Today(p, done, ::toggleMeal)
+                1 -> Plan(p, done, ::toggleMeal)
+                2 -> Recipes(p, tier) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
+                else -> Profile(p, hostel) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
             }
         }
     }
@@ -100,21 +116,23 @@ private val meals = listOf(
     }
 }
 @Composable private fun Today(p:PaddingValues, done:Set<String>, onDone:(String)->Unit) {
+    val consumed = meals.filter { it.name in done }.sumOf { it.kcal }
+    val target = 2000
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Good morning","Your plan for today") }
         item {
             Card(shape=RoundedCornerShape(24.dp),colors=CardDefaults.cardColors(containerColor=Green)) {
                 Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("DAILY TARGET",color=Color.White.copy(alpha=.8f),fontSize=12.sp,fontWeight=FontWeight.Bold)
-                    Row(verticalAlignment=Alignment.Bottom) { Text("1,240",color=Color.White,fontSize=34.sp,fontWeight=FontWeight.Bold); Text(" / 2,000 kcal",color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=6.dp)) }
-                    LinearProgressIndicator(progress={.62f},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
+                    Row(verticalAlignment=Alignment.Bottom) { Text("%,d".format(consumed),color=Color.White,fontSize=34.sp,fontWeight=FontWeight.Bold); Text(" / %,d kcal".format(target),color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=6.dp)) }
+                    LinearProgressIndicator(progress={(consumed.toFloat()/target).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Macro("Protein","68 g"); Macro("Carbs","142 g"); Macro("Fat","38 g") }
                 }
             }
         }
-        item { Section("Today's meals","4 meals") }
+        item { Section("Today's meals","4 meals · $consumed kcal logged") }
         items(meals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
-        item { Text("Sample nutrition targets only; consult a qualified professional for individualized medical nutrition advice.",color=Muted,fontSize=11.sp) }
+        item { Text("Calories update from checked sample meals. Nutrition values are illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
 }
 @Composable private fun Plan(p:PaddingValues,done:Set<String>,onDone:(String)->Unit) {
@@ -203,7 +221,7 @@ private val recipes=listOf(
                 }
             }
         }
-        item { Text("Profile preferences are local demo state. Membership and expert booking are not connected yet.",color=Muted,fontSize=11.sp) }
+        item { Text("Hostel mode and recipe budget are saved on this device. Membership and expert booking are not connected yet.",color=Muted,fontSize=11.sp) }
     }
 }
 @Composable private fun ProfileRow(label:String,value:String) {
