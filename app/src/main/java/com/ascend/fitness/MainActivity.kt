@@ -155,12 +155,13 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
             val energy=waterPreferences[energyKey] ?: 0
             val moodLabels=listOf("Very low","Low","Okay","Good","Great")
             val energyLabels=listOf("Drained","Low","Moderate","High","Energized")
-            val weeklyCheckins=(6 downTo 0).mapNotNull { offset ->
+            val weeklyHistory=(6 downTo 0).map { offset ->
                 val day=LocalDate.now().minusDays(offset.toLong())
                 val m=waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("wellness_mood_$day")]
                 val e=waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("wellness_energy_$day")]
-                if(m!=null && e!=null) m to e else null
+                Triple(day,m,e)
             }
+            val weeklyCheckins=weeklyHistory.mapNotNull { (_,m,e) -> if(m!=null && e!=null) m to e else null }
             Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("Daily wellbeing check-in",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp)
@@ -189,6 +190,17 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                             Text(String.format(java.util.Locale.US,"%.1f / 5",averageEnergy),color=Ink,fontWeight=FontWeight.Bold,fontSize=12.sp)
                         }
                     } else Text("Your 7-day averages will appear after you log check-ins.",color=Muted,fontSize=11.sp)
+                    Divider()
+                    Text("Daily history",color=Ink,fontWeight=FontWeight.SemiBold,fontSize=13.sp)
+                    weeklyHistory.forEach { (day,m,e) ->
+                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Text(day.format(java.time.format.DateTimeFormatter.ofPattern("EEE")),color=Muted,fontSize=11.sp,modifier=Modifier.width(30.dp))
+                            Text("Mood",color=Muted,fontSize=11.sp)
+                            Text(if(m==null) "—" else "$m/5",color=Ink,fontSize=11.sp,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f))
+                            Text("Energy",color=Muted,fontSize=11.sp)
+                            Text(if(e==null) "—" else "$e/5",color=Ink,fontSize=11.sp,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f))
+                        }
+                    }
                     Text("Wellbeing notes are personal tracking, not a clinical assessment.",color=Muted,fontSize=11.sp)
                 }
             }
