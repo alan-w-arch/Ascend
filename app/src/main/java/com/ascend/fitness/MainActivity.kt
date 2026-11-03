@@ -190,10 +190,10 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 OutlinedTextField(value=title,onValueChange={title=it.take(60)},label={Text("Meal name")},singleLine=true)
                 OutlinedTextField(value=time,onValueChange={time=it.take(8)},label={Text("Time (e.g. 8:30 AM)")},singleLine=true,isError=time.isNotBlank()&&!timeValid,supportingText={if(time.isNotBlank()&&!timeValid) Text("Enter a time like 8:30 AM")})
                 OutlinedTextField(value=ingredients,onValueChange={ingredients=it.take(200)},label={Text("Ingredients")},singleLine=true)
-                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)
-                OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit)},label={Text("Protein (g)")},singleLine=true)
-                OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit)},label={Text("Carbs (g)")},singleLine=true)
-                OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit)},label={Text("Fat (g)")},singleLine=true)
+                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit).take(6)},label={Text("Calories (kcal)")},singleLine=true)
+                OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit).take(6)},label={Text("Protein (g)")},singleLine=true)
+                OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit).take(6)},label={Text("Carbs (g)")},singleLine=true)
+                OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit).take(6)},label={Text("Fat (g)")},singleLine=true)
             }
         },
         confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt(),protein.toIntOrNull()?:0,carbs.toIntOrNull()?:0,fat.toIntOrNull()?:0)}){Text("Save")} },
