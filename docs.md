@@ -32,9 +32,19 @@
 ### M5 — Testing and release candidate
 - Add unit tests for persistence and calculations.
 - Test database migrations.
+- Run Android CI: debug/release builds, unit tests, and API 35 emulator instrumentation tests.
 - Manually verify the app on an emulator and a physical device.
 
-**Done when:** The release build succeeds and the critical-flow checklist passes.
+**Critical-flow checklist**
+- [ ] Fresh install launches to Today without a crash.
+- [ ] Add, edit, move, complete, uncomplete, and delete a custom meal.
+- [ ] Plan changes appear consistently on Today and Plan.
+- [ ] Recipe search, budget, saved-only, high-protein, sorting, and reset work together.
+- [ ] Saved recipes and profile preferences survive app restart.
+- [ ] Upgrade migration preserves existing completion and meal data.
+- [ ] Release build installs and launches.
+
+**Done when:** CI passes and the critical-flow checklist is verified on emulator and physical device.
 
 ### V1 — Version 1 ready
 - Update the README, version number, and release notes.
