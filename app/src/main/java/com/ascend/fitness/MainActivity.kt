@@ -175,6 +175,17 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                         OutlinedButton(onClick={updateWater(-250)},enabled=waterMl>0,modifier=Modifier.weight(1f)) { Text("−250 ml") }
                         Button(onClick={updateWater(250)},modifier=Modifier.weight(1f)) { Text("+250 ml") }
                     }
+                    Divider()
+                    Text("Last 7 days",color=Ink,fontWeight=FontWeight.SemiBold,fontSize=13.sp)
+                    (6 downTo 0).forEach { offset ->
+                        val day = LocalDate.now().minusDays(offset.toLong())
+                        val amount = waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("water_ml_$day")] ?: 0
+                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Text(day.format(java.time.format.DateTimeFormatter.ofPattern("EEE")),color=Muted,fontSize=11.sp,modifier=Modifier.width(30.dp))
+                            LinearProgressIndicator(progress={(amount.toFloat()/waterTarget).coerceIn(0f,1f)},modifier=Modifier.weight(1f).height(5.dp),color=Green,trackColor=Mint)
+                            Text("$amount ml",color=Muted,fontSize=11.sp,modifier=Modifier.width(54.dp))
+                        }
+                    }
                     Text("Hydration tracking is a simple reminder; individual fluid needs vary.",color=Muted,fontSize=11.sp)
                 }
             }
