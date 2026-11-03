@@ -405,7 +405,7 @@ private val recipes=listOf(
                     ProfileRow("Daily energy target","%,d kcal".format(target))
                     ProfileRow("Recipe library","Vegetarian examples")
                     ProfileRow("Budget",when(tier) { "Budget" -> "Up to ₹50/meal"; "Standard" -> "Up to ₹75/meal"; else -> "Flexible" })
-                    ProfileRow("Recipe tier",tier)
+                    ProfileRow("Recipe budget filter",tier)
                     Text("Daily calorie target",color=Muted,fontSize=12.sp)
                     Slider(value=target.toFloat(),onValueChange={ onTarget(it.toInt()) },valueRange=1000f..4000f,steps=29)
                     Text("Adjust from 1,000 to 4,000 kcal in 100 kcal steps. This is a tracking target, not a personalized medical recommendation.",color=Muted,fontSize=11.sp)
