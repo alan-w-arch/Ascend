@@ -47,16 +47,15 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
     var copyFeedback by remember { mutableStateOf<String?>(null) }
     val dateKey = selectedDate.toString()
     val weekStart = selectedDate.minusDays((selectedDate.dayOfWeek.value-1).toLong())
-    var weekSummary by remember { mutableStateOf<List<WeekDaySummary>>(emptyList()) }
-    LaunchedEffect(weekStart) {
-        weekSummary = (0L..6L).map { offset ->
-            val day = weekStart.plusDays(offset)
-            val dayKey = day.toString()
-            val custom = database.customMealDao().getMeals(dayKey)
-            val completed = database.mealCompletionDao().getCompletedMealIds(dayKey).toSet()
-            val dayMeals = meals + custom.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
-            WeekDaySummary(day,dayMeals.sumOf { it.kcal },dayMeals.count { it.name in completed },dayMeals.size)
-        }
+    val weekEnd = weekStart.plusDays(6)
+    val weekCustomMeals by database.customMealDao().observeMealsBetween(weekStart.toString(),weekEnd.toString()).collectAsState(initial=emptyList())
+    val weekCompletions by database.mealCompletionDao().observeCompletionsBetween(weekStart.toString(),weekEnd.toString()).collectAsState(initial=emptyList())
+    val weekSummary = (0L..6L).map { offset ->
+        val day = weekStart.plusDays(offset)
+        val custom = weekCustomMeals.filter { it.date == day.toString() }
+        val completed = weekCompletions.filter { it.date == day.toString() }.map { it.mealId }.toSet()
+        val dayMeals = meals + custom.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
+        WeekDaySummary(day,dayMeals.sumOf { it.kcal },dayMeals.count { it.name in completed },dayMeals.size)
     }
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())

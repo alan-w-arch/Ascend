@@ -27,6 +27,9 @@ interface MealCompletionDao {
     @Query("SELECT mealId FROM meal_completions WHERE date = :date")
     fun observeCompletedMealIds(date: String): Flow<List<String>>
 
+    @Query("SELECT date, mealId FROM meal_completions WHERE date BETWEEN :startDate AND :endDate")
+    fun observeCompletionsBetween(startDate: String, endDate: String): Flow<List<MealCompletion>>
+
     @Query("SELECT mealId FROM meal_completions WHERE date = :date")
     suspend fun getCompletedMealIds(date: String): List<String>
 
@@ -69,6 +72,9 @@ data class CustomMeal(
 interface CustomMealDao {
     @Query("SELECT * FROM custom_meals WHERE date = :date ORDER BY id")
     fun observeMeals(date: String): Flow<List<CustomMeal>>
+
+    @Query("SELECT * FROM custom_meals WHERE date BETWEEN :startDate AND :endDate ORDER BY date, id")
+    fun observeMealsBetween(startDate: String, endDate: String): Flow<List<CustomMeal>>
 
     @Query("SELECT * FROM custom_meals WHERE date = :date ORDER BY id")
     suspend fun getMeals(date: String): List<CustomMeal>
