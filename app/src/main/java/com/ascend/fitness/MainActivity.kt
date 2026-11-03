@@ -303,6 +303,25 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
                             }
                         }
                     }
+                    val daysWithMeals=weekSummary.count { it.plannedKcal>0 }
+                    val underTargetDays=weekSummary.count { it.plannedKcal in 1..target }
+                    val averageKcal=if(daysWithMeals>0) weekSummary.sumOf { it.plannedKcal }/daysWithMeals else 0
+                    val completionRate=if(weekMeals>0) (100*weekDone/weekMeals) else 0
+                    Text("Weekly insights",fontSize=12.sp,fontWeight=FontWeight.SemiBold,color=Ink)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        Column(Modifier.weight(1f).background(Canvas,RoundedCornerShape(12.dp)).padding(10.dp)) {
+                            Text("$underTargetDays / $daysWithMeals",fontWeight=FontWeight.Bold,color=Green,fontSize=18.sp)
+                            Text("planned days at or below target",fontSize=10.sp,color=Muted)
+                        }
+                        Column(Modifier.weight(1f).background(Canvas,RoundedCornerShape(12.dp)).padding(10.dp)) {
+                            Text(if(daysWithMeals>0) "%,d".format(averageKcal) else "—",fontWeight=FontWeight.Bold,color=Ink,fontSize=18.sp)
+                            Text("average kcal per planned day",fontSize=10.sp,color=Muted)
+                        }
+                        Column(Modifier.weight(1f).background(Canvas,RoundedCornerShape(12.dp)).padding(10.dp)) {
+                            Text("$completionRate%",fontWeight=FontWeight.Bold,color=Green,fontSize=18.sp)
+                            Text("meal completion",fontSize=10.sp,color=Muted)
+                        }
+                    }
                     Text("Planned calories by day",fontSize=12.sp,fontWeight=FontWeight.SemiBold,color=Ink)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp),verticalAlignment=Alignment.Bottom) {
                         weekSummary.forEach { day ->
