@@ -282,7 +282,19 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
             val weekMeals=weekSummary.sumOf { it.totalMeals }
             Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text("WEEK AT A GLANCE",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+                        Text("WEEK AT A GLANCE",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold)
+                        TextButton(onClick={
+                            val range=weekStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))+" – "+weekStart.plusDays(6).format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy"))
+                            val lines=weekSummary.joinToString("\\n") { day ->
+                                val label=day.date.format(java.time.format.DateTimeFormatter.ofPattern("EEE, MMM d"))
+                                "$label: ${day.plannedKcal} kcal · ${day.completedMeals}/${day.totalMeals} meals completed"
+                            }
+                            val text="Ascend weekly meal plan — $range\\n$lines\\n\\nTotal planned: $weekCalories kcal\\nWeekly completion: $weekDone/$weekMeals meals\\nNutrition estimates are illustrative; verify ingredients and portions."
+                            val send=Intent(Intent.ACTION_SEND).apply { type="text/plain"; putExtra(Intent.EXTRA_SUBJECT,"Ascend weekly meal plan — $range"); putExtra(Intent.EXTRA_TEXT,text) }
+                            context.startActivity(Intent.createChooser(send,"Share weekly plan"))
+                        }) { Icon(Icons.Default.Share,"Share weekly plan",tint=Green); Text("Share week") }
+                    }
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                         Column {
                             Text("%,d".format(weekCalories),fontSize=22.sp,fontWeight=FontWeight.Bold,color=Ink)
