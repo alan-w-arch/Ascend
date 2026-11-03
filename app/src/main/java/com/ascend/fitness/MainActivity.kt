@@ -296,11 +296,14 @@ private val recipes=listOf(
     val scope = rememberCoroutineScope()
     val savedIds by database.savedRecipeDao().observeSavedRecipeIds().collectAsState(initial=emptyList())
     var savedOnly by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
     val maxCost = when(tier) { "Budget" -> 50; "Standard" -> 75; else -> Int.MAX_VALUE }
-    val visibleRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) && (!hostel || it.timing.contains("No cook") || it.timing.contains("One pot")) }
+    val query = searchQuery.trim()
+    val visibleRecipes = recipes.filter { it.cost <= maxCost && (!savedOnly || it.title in savedIds) && (!hostel || it.timing.contains("No cook") || it.timing.contains("One pot")) && (query.isBlank() || it.title.contains(query, ignoreCase=true) || it.tags.contains(query, ignoreCase=true)) }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Recipe library","Simple, student-friendly meals") }
+        item { OutlinedTextField(value=searchQuery,onValueChange={searchQuery=it},modifier=Modifier.fillMaxWidth(),label={Text("Search recipes")},singleLine=true,leadingIcon={Icon(Icons.Default.Search,"Search")},trailingIcon={if(searchQuery.isNotEmpty()) IconButton(onClick={searchQuery=""}) { Icon(Icons.Default.Close,"Clear search") }}) }
         item {
             Text("Your budget",color=Ink,fontWeight=FontWeight.SemiBold)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.padding(top=8.dp)) {
