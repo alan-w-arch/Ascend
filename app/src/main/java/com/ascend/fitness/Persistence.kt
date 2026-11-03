@@ -10,6 +10,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 val Context.ascendPreferences by preferencesDataStore(name = "ascend_preferences")
@@ -29,15 +31,35 @@ interface MealCompletionDao {
     suspend fun removeCompletion(date: String, mealId: String)
 }
 
-@Database(entities = [MealCompletion::class], version = 1, exportSchema = false)
+@Entity(tableName = "custom_meals")
+data class CustomMeal(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val date: String,
+    val title: String,
+    val time: String,
+    val ingredients: String,
+    val kcal: Int
+)
+
+@Dao
+interface CustomMealDao {
+    @Query("SELECT * FROM custom_meals WHERE date = :date ORDER BY id")
+    fun observeMeals(date: String): Flow<List<CustomMeal>>
+
+    @Insert
+    suspend fun insert(meal: CustomMeal)
+}
+
+@Database(entities = [MealCompletion::class, CustomMeal::class], version = 2, exportSchema = false)
 abstract class AscendDatabase : RoomDatabase() {
     abstract fun mealCompletionDao(): MealCompletionDao
+    abstract fun customMealDao(): CustomMealDao
 
     companion object {
         @Volatile private var INSTANCE: AscendDatabase? = null
         fun getInstance(context: Context): AscendDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, AscendDatabase::class.java, "ascend_local.db")
-                .build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2).build().also { INSTANCE = it }
         }
     }
 }

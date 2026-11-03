@@ -46,6 +46,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     val today = LocalDate.now().toString()
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(today).collectAsState(initial = emptyList())
     val done = completedIds.toSet()
+    val customMeals by database.customMealDao().observeMeals(today).collectAsState(initial = emptyList())
     val preferences by context.ascendPreferences.data.collectAsState(initial = androidx.datastore.preferences.core.emptyPreferences())
     val hostel = preferences[booleanPreferencesKey("hostel_mode")] ?: true
     val tier = preferences[stringPreferencesKey("recipe_tier")] ?: "Budget"
@@ -67,7 +68,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, done, ::toggleMeal)
+                0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal)
                 1 -> Plan(p, done, ::toggleMeal)
                 2 -> Recipes(p, tier) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
@@ -115,8 +116,10 @@ private val meals = listOf(
         }
     }
 }
-@Composable private fun Today(p:PaddingValues, done:Set<String>, onDone:(String)->Unit) {
-    val consumed = meals.filter { it.name in done }.sumOf { it.kcal }
+@Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit) {
+    var showAdd by remember { mutableStateOf(false) }
+    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️") }
+    val consumed = allMeals.filter { it.name in done }.sumOf { it.kcal }
     val target = 2000
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Good morning","Your plan for today") }
@@ -130,10 +133,41 @@ private val meals = listOf(
                 }
             }
         }
-        item { Section("Today's meals","4 meals · $consumed kcal logged") }
-        items(meals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
+        item {
+            Row(verticalAlignment=Alignment.CenterVertically) {
+                Section("Today's meals","${allMeals.size} meals · $consumed kcal logged")
+                Spacer(Modifier.width(8.dp))
+                IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
+            }
+        }
+        items(allMeals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
         item { Text("Calories update from checked sample meals. Nutrition values are illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
+    if (showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={ title,time,ingredients,kcal ->
+        onAdd(CustomMeal(date=LocalDate.now().toString(),title=title,time=time,ingredients=ingredients,kcal=kcal))
+        showAdd=false
+    })
+}
+@Composable private fun AddMealDialog(onDismiss:()->Unit,onSave:(String,String,String,Int)->Unit) {
+    var title by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("12:00 PM") }
+    var ingredients by remember { mutableStateOf("") }
+    var kcal by remember { mutableStateOf("") }
+    val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true
+    AlertDialog(
+        onDismissRequest=onDismiss,
+        title={Text("Add a meal")},
+        text={
+            Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value=title,onValueChange={title=it},label={Text("Meal name")},singleLine=true)
+                OutlinedTextField(value=time,onValueChange={time=it},label={Text("Time")},singleLine=true)
+                OutlinedTextField(value=ingredients,onValueChange={ingredients=it},label={Text("Ingredients")},singleLine=true)
+                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)
+            }
+        },
+        confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt())}){Text("Save")} },
+        dismissButton={TextButton(onClick=onDismiss){Text("Cancel")}}
+    )
 }
 @Composable private fun Plan(p:PaddingValues,done:Set<String>,onDone:(String)->Unit) {
     var day by remember { mutableIntStateOf(3) }

@@ -8,7 +8,7 @@ Native Android fitness and nutrition planner for university students, built with
 3. Run the app configuration on Android 8.0 (API 26) or newer.
 
 ## Prototype screens
-- Today: daily calorie summary based on checked sample meals and persistent meal completion
+- Today: daily calorie summary, persistent meal completion, and user-created meals
 - Plan: selectable date preview and meal list
 - Recipes: Budget / Standard / Premium filtering with sample ingredient costs
 - Profile: dietary preferences, persistent hostel mode, and Ascend Plus preview
