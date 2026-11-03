@@ -1,6 +1,8 @@
 package com.ascend.fitness
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.datastore.preferences.core.booleanPreferencesKey
