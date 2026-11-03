@@ -407,7 +407,7 @@ private val recipes=listOf(
                     ProfileRow("Recipe tier",tier)
                     Text("Daily calorie target",color=Muted,fontSize=12.sp)
                     Slider(value=target.toFloat(),onValueChange={ onTarget(it.toInt()) },valueRange=1000f..4000f,steps=29)
-                    Text("Adjust from 1,000 to 4,000 kcal",color=Muted,fontSize=11.sp)
+                    Text("Adjust from 1,000 to 4,000 kcal. This is a tracking target, not a personalized medical recommendation.",color=Muted,fontSize=11.sp)
                 }
             }
         }
