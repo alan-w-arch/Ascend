@@ -55,6 +55,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     val hostel = preferences[booleanPreferencesKey("hostel_mode")] ?: true
     val tier = preferences[stringPreferencesKey("recipe_tier")] ?: "Budget"
     val calorieTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] ?: 2000
+    val proteinTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("protein_target")] ?: 100
     fun toggleMeal(mealId: String) {
         scope.launch {
             val dao = database.mealCompletionDao()
@@ -73,10 +74,10 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, calorieTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, { meal -> scope.launch { database.customMealDao().update(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
+                0 -> Today(p, calorieTarget, proteinTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, { meal -> scope.launch { database.customMealDao().update(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
                 1 -> Plan(p, database, calorieTarget)
                 2 -> Recipes(p, tier, hostel, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
-                else -> Profile(p, hostel, tier, calorieTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } })
+                else -> Profile(p, hostel, tier, calorieTarget, proteinTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("protein_target")] = target } } })
             }
         }
     }
@@ -125,7 +126,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
     }
 }
-@Composable private fun Today(p:PaddingValues, target:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onUpdate:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
+@Composable private fun Today(p:PaddingValues, target:Int, proteinTarget:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onUpdate:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
@@ -144,6 +145,10 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     Row(verticalAlignment=Alignment.Bottom) { Text("%,d".format(consumed),color=Color.White,fontSize=34.sp,fontWeight=FontWeight.Bold); Text(" / %,d kcal".format(target),color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=6.dp)) }
                     LinearProgressIndicator(progress={(consumed.toFloat()/target).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
                     Text(if (consumed <= target) "%,d kcal remaining".format(target - consumed) else "%,d kcal over target".format(consumed - target),color=Color.White.copy(alpha=.9f),fontSize=12.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text("Protein goal",color=Color.White.copy(alpha=.9f),fontSize=12.sp); Text("$protein g / $proteinTarget g",color=Color.White,fontSize=12.sp,fontWeight=FontWeight.Bold) }
+                    LinearProgressIndicator(progress={(protein.toFloat()/proteinTarget).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(6.dp),color=Color(0xFFFFD166),trackColor=Color.White.copy(alpha=.25f))
+                    Text(if(protein>=proteinTarget) "Protein target reached" else "${proteinTarget-protein} g protein to goal",color=Color.White.copy(alpha=.85f),fontSize=11.sp)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Macro("Protein","${protein} g"); Macro("Carbs","${carbs} g"); Macro("Fat","${fat} g") }
                 }
             }
@@ -634,7 +639,7 @@ private val recipes=listOf(
         )
     }
 }
-@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,target:Int,onHostel:(Boolean)->Unit,onTarget:(Int)->Unit) {
+@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,target:Int,proteinTarget:Int,onHostel:(Boolean)->Unit,onTarget:(Int)->Unit,onProteinTarget:(Int)->Unit) {
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Your profile","Preferences for a plan that fits your life") }
         item {
@@ -649,6 +654,10 @@ private val recipes=listOf(
                     Text("Daily calorie target",color=Muted,fontSize=12.sp)
                     Slider(value=target.toFloat(),onValueChange={ onTarget(it.toInt()) },valueRange=1000f..4000f,steps=29)
                     Text("Adjust from 1,000 to 4,000 kcal in 100 kcal steps. This is a tracking target, not a personalized medical recommendation.",color=Muted,fontSize=11.sp)
+                    Divider()
+                    ProfileRow("Daily protein target","$proteinTarget g")
+                    Slider(value=proteinTarget.toFloat(),onValueChange={onProteinTarget(it.toInt())},valueRange=30f..200f,steps=33)
+                    Text("Set a personal tracking goal from 30 to 200 g/day. Protein needs vary; this setting is not medical advice.",color=Muted,fontSize=11.sp)
                 }
             }
         }
