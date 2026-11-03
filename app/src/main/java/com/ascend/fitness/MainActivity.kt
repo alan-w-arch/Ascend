@@ -403,7 +403,7 @@ private val recipes=listOf(
                     Text("Personal details",color=Ink,fontWeight=FontWeight.Bold)
                     ProfileRow("Example goal","Healthy weight management")
                     ProfileRow("Daily energy target","%,d kcal".format(target))
-                    ProfileRow("Diet","Vegetarian")
+                    ProfileRow("Recipe library","Vegetarian examples")
                     ProfileRow("Budget",when(tier) { "Budget" -> "Up to ₹50/meal"; "Standard" -> "Up to ₹75/meal"; else -> "Flexible" })
                     ProfileRow("Recipe tier",tier)
                     Text("Daily calorie target",color=Muted,fontSize=12.sp)
