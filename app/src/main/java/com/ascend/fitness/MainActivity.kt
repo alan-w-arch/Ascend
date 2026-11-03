@@ -84,6 +84,10 @@ private val meals = listOf(
     Meal("Snack","4:30 PM","Peanut banana bites","Banana · peanuts",180,"🍌",5,27,8),
     Meal("Dinner","8:00 PM","Moong dal khichdi","Moong dal · rice · spices",420,"🍲",17,72,7)
 )
+private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
+    runCatching { java.time.LocalTime.parse(meal.time, java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.US)).toSecondOfDay() }
+        .getOrDefault(Int.MAX_VALUE)
+}
 
 @Composable private fun Header(title:String, subtitle:String) {
     Column {
@@ -118,7 +122,7 @@ private val meals = listOf(
 }
 @Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit) {
     var showAdd by remember { mutableStateOf(false) }
-    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
+    val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     val loggedMeals = allMeals.filter { it.name in done }
     val consumed = loggedMeals.sumOf { it.kcal }
     val protein = loggedMeals.sumOf { it.protein }
@@ -188,7 +192,7 @@ private val meals = listOf(
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
     val scope = rememberCoroutineScope()
     val completed = completedIds.toSet()
-    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
+    val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Meal plan","Plan and track meals by date") }
         item {
