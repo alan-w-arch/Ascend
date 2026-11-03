@@ -1,6 +1,7 @@
 package com.ascend.fitness
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -205,6 +207,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     )
 }
 @Composable private fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
+    val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showAdd by remember { mutableStateOf(false) }
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
@@ -236,6 +239,14 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         item {
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                TextButton(onClick={
+                    val dateLabel=selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy"))
+                    val mealLines=allMeals.joinToString("\\n") { meal -> "${if(meal.name in completed) "✓" else "○"} ${meal.time} — ${meal.title} (${meal.kcal} kcal; P ${meal.protein}g, C ${meal.carbs}g, F ${meal.fat}g)" }
+                    val totalKcal=allMeals.sumOf { it.kcal }
+                    val text="Ascend meal plan — $dateLabel\\n$mealLines\\n\\nPlanned total: $totalKcal kcal\\nNutrition values are estimates; verify ingredients and portions."
+                    val send=Intent(Intent.ACTION_SEND).apply { type="text/plain"; putExtra(Intent.EXTRA_SUBJECT,"Ascend meal plan — $dateLabel"); putExtra(Intent.EXTRA_TEXT,text) }
+                    context.startActivity(Intent.createChooser(send,"Share meal plan"))
+                }) { Icon(Icons.Default.Share,"Share plan",tint=Green); Text("Share plan") }
                 TextButton(onClick={scope.launch {
                     val previousDate=selectedDate.minusDays(1).toString()
                     val previousMeals=database.customMealDao().getMeals(previousDate)
