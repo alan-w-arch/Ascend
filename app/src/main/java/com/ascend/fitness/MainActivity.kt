@@ -699,6 +699,20 @@ private val recipes=listOf(
                     Text("Enter 20–350 kg. Weight entries stay on this device and are for personal tracking, not diagnosis.",color=Muted,fontSize=11.sp)
                     Divider()
                     Text("Last 7 days",color=Ink,fontWeight=FontWeight.SemiBold)
+                    val weightEntries=(6 downTo 0).mapNotNull { offset ->
+                        val day=today.minusDays(offset.toLong())
+                        prefs[stringPreferencesKey("weight_kg_$day")]?.toFloatOrNull()?.let { day to it }
+                    }
+                    if(weightEntries.isNotEmpty()) {
+                        val first=weightEntries.first().second
+                        val latest=weightEntries.last().second
+                        val delta=latest-first
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                            Text("Change across recorded days",color=Muted,fontSize=12.sp)
+                            Text("${if(delta>0) "+" else ""}${String.format(java.util.Locale.US,"%.1f",delta)} kg",color=Ink,fontWeight=FontWeight.Bold,fontSize=12.sp)
+                        }
+                        Text("Range: ${String.format(java.util.Locale.US,"%.1f",weightEntries.minOf { it.second })}–${String.format(java.util.Locale.US,"%.1f",weightEntries.maxOf { it.second })} kg",color=Muted,fontSize=11.sp)
+                    } else Text("Log a weight to start seeing your trend.",color=Muted,fontSize=12.sp)
                     (6 downTo 0).forEach { offset ->
                         val day=today.minusDays(offset.toLong())
                         val value=prefs[stringPreferencesKey("weight_kg_$day")]
