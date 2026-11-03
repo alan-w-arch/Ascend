@@ -194,6 +194,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit).take(6)},label={Text("Protein (g)")},singleLine=true)
                 OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit).take(6)},label={Text("Carbs (g)")},singleLine=true)
                 OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit).take(6)},label={Text("Fat (g)")},singleLine=true)
+                Text("Macro fields are optional; blank values are saved as 0 g.",color=Muted,fontSize=11.sp)
             }
         },
         confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt(),protein.toIntOrNull()?:0,carbs.toIntOrNull()?:0,fat.toIntOrNull()?:0)}){Text("Save")} },
