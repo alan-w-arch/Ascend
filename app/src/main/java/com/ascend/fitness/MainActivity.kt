@@ -71,7 +71,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
             }
         }) { p ->
             when(tab) {
-                0 -> Today(p, calorieTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
+                0 -> Today(p, calorieTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, { meal -> scope.launch { database.customMealDao().update(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
                 1 -> Plan(p, database, calorieTarget)
                 2 -> Recipes(p, tier, hostel, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel, tier, calorieTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } })
@@ -123,7 +123,8 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
     }
 }
-@Composable private fun Today(p:PaddingValues, target:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
+@Composable private fun Today(p:PaddingValues, target:Int, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onUpdate:(CustomMeal)->Unit, onDone:(String)->Unit, onRemove:(CustomMeal)->Unit) {
+    var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     val allMeals = sortMealsByTime(meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) })
     val loggedMeals = allMeals.filter { it.name in done }
@@ -158,6 +159,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                 val customId = meal.name.removePrefix("custom-").toLongOrNull()
                 val custom = customMeals.firstOrNull { it.id == customId }
                 if (custom != null) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                    TextButton(onClick={editingMeal=custom}) { Icon(Icons.Default.Edit,"Edit meal",tint=Muted); Text("Edit",color=Muted) }
                     TextButton(onClick={onRemove(custom)}) {
                         Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
                         Text("Remove ${custom.title}",color=Muted)
@@ -171,20 +173,21 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         onAdd(CustomMeal(date=LocalDate.now().toString(),title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat))
         showAdd=false
     })
+    editingMeal?.let { meal -> AddMealDialog(initialMeal=meal,onDismiss={editingMeal=null},onSave={title,time,ingredients,kcal,protein,carbs,fat -> onUpdate(meal.copy(title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat)); editingMeal=null }) }
 }
-@Composable private fun AddMealDialog(onDismiss:()->Unit,onSave:(String,String,String,Int,Int,Int,Int)->Unit) {
-    var title by remember { mutableStateOf("") }
-    var time by remember { mutableStateOf("12:00 PM") }
-    var ingredients by remember { mutableStateOf("") }
-    var kcal by remember { mutableStateOf("") }
-    var protein by remember { mutableStateOf("") }
-    var carbs by remember { mutableStateOf("") }
-    var fat by remember { mutableStateOf("") }
+@Composable private fun AddMealDialog(initialMeal:CustomMeal?=null,onDismiss:()->Unit,onSave:(String,String,String,Int,Int,Int,Int)->Unit) {
+    var title by remember(initialMeal?.id) { mutableStateOf(initialMeal?.title ?: "") }
+    var time by remember(initialMeal?.id) { mutableStateOf(initialMeal?.time ?: "12:00 PM") }
+    var ingredients by remember(initialMeal?.id) { mutableStateOf(initialMeal?.ingredients ?: "") }
+    var kcal by remember(initialMeal?.id) { mutableStateOf(initialMeal?.kcal?.toString() ?: "") }
+    var protein by remember(initialMeal?.id) { mutableStateOf(initialMeal?.protein?.toString() ?: "") }
+    var carbs by remember(initialMeal?.id) { mutableStateOf(initialMeal?.carbs?.toString() ?: "") }
+    var fat by remember(initialMeal?.id) { mutableStateOf(initialMeal?.fat?.toString() ?: "") }
     val timeValid = runCatching { java.time.LocalTime.parse(time.trim(), java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(java.util.Locale.US)) }.isSuccess
     val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true && timeValid
     AlertDialog(
         onDismissRequest=onDismiss,
-        title={Text("Add a meal")},
+        title={Text(if(initialMeal==null) "Add a meal" else "Edit meal")},
         text={
             Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(value=title,onValueChange={title=it.take(60)},label={Text("Meal name")},singleLine=true)
