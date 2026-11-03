@@ -424,7 +424,7 @@ private val recipes=listOf(
                 Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Text("Ascend Plus",color=Ink,fontWeight=FontWeight.Bold)
                     Text("Personalized plans, expanded recipes, and expert consultations.",color=Muted)
-                    Button(onClick={},modifier=Modifier.fillMaxWidth()){Text("Explore membership · ₹99/month")}
+                    Button(onClick={},enabled=false,modifier=Modifier.fillMaxWidth()){Text("Membership coming soon · ₹99/month")}
                 }
             }
         }
