@@ -332,7 +332,7 @@ private val recipes=listOf(
                 }
             }
         }
-        item { if(visibleRecipes.isEmpty()) Text("No recipes match this filter.",color=Muted) }
+        item { if(visibleRecipes.isEmpty()) Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text("No recipes match your current filters.",color=Muted); if(searchQuery.isNotBlank()) TextButton(onClick={searchQuery=""}) { Text("Clear search") } } }
         item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified.",color=Muted,fontSize=11.sp) }
     }
     selectedRecipe?.let { recipe ->
