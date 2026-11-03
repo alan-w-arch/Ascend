@@ -252,7 +252,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         items(customMeals,key={it.id}) { custom ->
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
-                TextButton(onClick={scope.launch { database.customMealDao().delete(custom) }}) {
+                TextButton(onClick={scope.launch { database.mealCompletionDao().removeCompletion(dateKey,"custom-${custom.id}"); database.customMealDao().delete(custom) }}) {
                     Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
                     Text("Remove",color=Muted)
                 }
