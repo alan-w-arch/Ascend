@@ -374,7 +374,7 @@ private val recipes=listOf(
                     ProfileRow("Goal","Healthy weight management")
                     ProfileRow("Daily energy target","2,000 kcal")
                     ProfileRow("Diet","Vegetarian")
-                    ProfileRow("Budget","Budget · ₹50/meal")
+                    ProfileRow("Budget",when(tier) { "Budget" -> "Up to ₹50/meal"; "Standard" -> "Up to ₹75/meal"; else -> "Flexible" })
                     ProfileRow("Recipe tier",tier)
                 }
             }
