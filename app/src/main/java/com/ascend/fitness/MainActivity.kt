@@ -303,6 +303,18 @@ private data class WeekDaySummary(val date:LocalDate,val plannedKcal:Int,val com
                             }
                         }
                     }
+                    Text("Planned calories by day",fontSize=12.sp,fontWeight=FontWeight.SemiBold,color=Ink)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp),verticalAlignment=Alignment.Bottom) {
+                        weekSummary.forEach { day ->
+                            Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                                Text(if(day.plannedKcal>0) (day.plannedKcal/100).toString()+"k" else "—",fontSize=9.sp,color=Muted)
+                                Box(Modifier.fillMaxWidth().height(44.dp),contentAlignment=Alignment.BottomCenter) {
+                                    Box(Modifier.fillMaxWidth().height((44f*(day.plannedKcal.toFloat()/target.coerceAtLeast(1)).coerceIn(0f,1f)).coerceAtLeast(if(day.plannedKcal>0) 3f else 0f).dp).background(if(day.plannedKcal>target) Color(0xFFD99B48) else Mint,RoundedCornerShape(4.dp)))
+                                }
+                                Text(day.date.format(java.time.format.DateTimeFormatter.ofPattern("EE")),fontSize=10.sp,color=Muted)
+                            }
+                        }
+                    }
                 }
             }
         }
