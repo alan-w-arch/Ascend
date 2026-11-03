@@ -343,6 +343,7 @@ private val recipes=listOf(
         item { Text("Costs are illustrative estimates, not live local prices. Nutrition values are sample estimates, not verified; check ingredient labels and serving sizes.",color=Muted,fontSize=11.sp) }
     }
     selectedRecipe?.let { recipe ->
+        var servings by remember(recipe.title) { mutableIntStateOf(1) }
         val ingredients = when(recipe.title) {
             "Banana oats bowl" -> "½ cup oats, 1 banana, ¾ cup milk"
             "Chickpea rice bowl" -> "¾ cup cooked chickpeas, 1 cup cooked rice, cucumber, lemon"
@@ -361,9 +362,12 @@ private val recipes=listOf(
             onDismissRequest={selectedRecipe=null},
             title={Text(recipe.title)},
             text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                Text("${recipe.timing} · ${recipe.kcal} kcal · estimated ₹${recipe.cost}/serving",color=Muted)
-                Text("Protein ${recipe.protein}g · Carbs ${recipe.carbs}g · Fat ${recipe.fat}g",color=Green,fontWeight=FontWeight.SemiBold)
-                Text("Ingredients",fontWeight=FontWeight.Bold)
+                Text("${recipe.timing} · ${recipe.kcal * servings} kcal · estimated ₹${recipe.cost * servings} total",color=Muted)
+                Text("Servings: $servings",fontWeight=FontWeight.SemiBold)
+                Slider(value=servings.toFloat(),onValueChange={servings=it.toInt()},valueRange=1f..5f,steps=3)
+                Text("Per serving: ${recipe.kcal} kcal · P ${recipe.protein}g · C ${recipe.carbs}g · F ${recipe.fat}g",color=Green,fontWeight=FontWeight.SemiBold)
+                Text("Total: P ${recipe.protein * servings}g · C ${recipe.carbs * servings}g · F ${recipe.fat * servings}g",color=Green,fontWeight=FontWeight.SemiBold)
+                Text("Ingredients (per serving)",fontWeight=FontWeight.Bold)
                 Text(ingredients)
                 Text("Method",fontWeight=FontWeight.Bold)
                 Text(steps)
@@ -376,13 +380,13 @@ private val recipes=listOf(
                             database.customMealDao().insert(
                                 CustomMeal(
                                     date=LocalDate.now().toString(),
-                                    title=recipe.title,
+                                    title=if(servings==1) recipe.title else "${recipe.title} · $servings servings",
                                     time="Any time",
-                                    ingredients=ingredients,
-                                    kcal=recipe.kcal,
-                                    protein=recipe.protein,
-                                    carbs=recipe.carbs,
-                                    fat=recipe.fat
+                                    ingredients="$servings serving(s): $ingredients",
+                                    kcal=recipe.kcal * servings,
+                                    protein=recipe.protein * servings,
+                                    carbs=recipe.carbs * servings,
+                                    fat=recipe.fat * servings
                                 )
                             )
                             selectedRecipe=null
