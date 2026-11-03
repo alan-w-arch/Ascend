@@ -88,7 +88,7 @@ private val meals = listOf(
     Meal("Dinner","8:00 PM","Moong dal khichdi","Moong dal · rice · spices",420,"🍲",17,72,7)
 )
 private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { meal ->
-    runCatching { java.time.LocalTime.parse(meal.time, java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.US)).toSecondOfDay() }
+    runCatching { java.time.LocalTime.parse(meal.time, java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(java.util.Locale.US)).toSecondOfDay() }
         .getOrDefault(Int.MAX_VALUE)
 }
 
@@ -180,7 +180,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     var protein by remember { mutableStateOf("") }
     var carbs by remember { mutableStateOf("") }
     var fat by remember { mutableStateOf("") }
-    val timeValid = runCatching { java.time.LocalTime.parse(time.trim(), java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.US)) }.isSuccess
+    val timeValid = runCatching { java.time.LocalTime.parse(time.trim(), java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("h:mm a").toFormatter(java.util.Locale.US)) }.isSuccess
     val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true && timeValid
     AlertDialog(
         onDismissRequest=onDismiss,
