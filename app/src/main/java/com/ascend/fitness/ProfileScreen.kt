@@ -121,6 +121,33 @@ import java.time.LocalDate
             }
         }
         item {
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val prefs by context.ascendPreferences.data.collectAsState(initial=androidx.datastore.preferences.core.emptyPreferences())
+            val enabled = prefs[booleanPreferencesKey("hydration_reminders_enabled")] ?: false
+            Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.fillMaxWidth().padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment=Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Gentle hydration reminders",color=Ink,fontWeight=FontWeight.Bold)
+                            Text("A quiet nudge every hour during the day.",color=Muted,fontSize=12.sp)
+                        }
+                        Switch(checked=enabled,onCheckedChange={ turnOn ->
+                            scope.launch {
+                                context.ascendPreferences.edit { it[booleanPreferencesKey("hydration_reminders_enabled")] = turnOn }
+                                val alarm = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                                val intent = android.content.Intent(context, HydrationReminderReceiver::class.java)
+                                val pending = android.app.PendingIntent.getBroadcast(context, 410, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+                                if(turnOn) alarm.setInexactRepeating(android.app.AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+60*60*1000L, 60*60*1000L, pending)
+                                else alarm.cancel(pending)
+                            }
+                        })
+                    }
+                    Text("Standard notifications respect your device settings. Turn this off anytime.",color=Muted,fontSize=11.sp)
+                }
+            }
+        }
+        item {
             Card(shape=RoundedCornerShape(22.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Hostel mode",color=Ink,fontWeight=FontWeight.Bold); Text("Prioritize kettle/no-cook meals and simple equipment.",color=Muted,fontSize=12.sp) }
