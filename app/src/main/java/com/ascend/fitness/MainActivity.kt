@@ -126,7 +126,7 @@ private val meals = listOf(
     val fat = loggedMeals.sumOf { it.fat }
     val target = 2000
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-        item { Header("Good morning","Your plan for today") }
+        item { Header(when (java.time.LocalTime.now().hour) { in 5..11 -> "Good morning"; in 12..16 -> "Good afternoon"; else -> "Good evening" },"Your plan for today") }
         item {
             Card(shape=RoundedCornerShape(24.dp),colors=CardDefaults.cardColors(containerColor=Green)) {
                 Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
