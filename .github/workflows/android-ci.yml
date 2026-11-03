@@ -29,7 +29,7 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - name: Build debug and release variants; run unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleRelease
+        run: bash ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleRelease
 
   instrumentation:
     name: Emulator persistence tests
@@ -55,4 +55,4 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
-          script: ./gradlew --no-daemon connectedDebugAndroidTest
+          script: bash ./gradlew --no-daemon connectedDebugAndroidTest
