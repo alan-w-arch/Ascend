@@ -69,7 +69,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
         }) { p ->
             when(tab) {
                 0 -> Today(p, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, ::toggleMeal)
-                1 -> Plan(p, done, ::toggleMeal)
+                1 -> Plan(p, database)
                 2 -> Recipes(p, tier) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
                 else -> Profile(p, hostel) { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }
             }
@@ -169,25 +169,62 @@ private val meals = listOf(
         dismissButton={TextButton(onClick=onDismiss){Text("Cancel")}}
     )
 }
-@Composable private fun Plan(p:PaddingValues,done:Set<String>,onDone:(String)->Unit) {
-    var day by remember { mutableIntStateOf(3) }
+@Composable private fun Plan(p:PaddingValues,database:AscendDatabase) {
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showAdd by remember { mutableStateOf(false) }
+    val dateKey = selectedDate.toString()
+    val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
+    val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
+    val scope = rememberCoroutineScope()
+    val completed = completedIds.toSet()
+    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️") }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-        item { Header("Meal plan","November 2026 · Plan ahead") }
+        item { Header("Meal plan","Plan and track meals by date") }
         item {
             Card(colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(20.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("M","T","W","T","F","S","S").forEach { Text(it,color=Muted,modifier=Modifier.width(32.dp)) } }
-                    Spacer(Modifier.height(12.dp))
-                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-                        (1..7).forEach { n -> Box(Modifier.size(32.dp).background(if(n==day) Green else Color.Transparent,CircleShape).clickable{day=n},contentAlignment=Alignment.Center) { Text("$n",color=if(n==day) Color.White else Ink) } }
+                Row(Modifier.fillMaxWidth().padding(16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+                    IconButton(onClick={selectedDate=selectedDate.minusDays(1)}) { Icon(Icons.Default.ChevronLeft,"Previous day") }
+                    Column(horizontalAlignment=Alignment.CenterHorizontally) {
+                        Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE")),color=Ink,fontWeight=FontWeight.Bold)
+                        Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy")),color=Muted)
+                        if(selectedDate==LocalDate.now()) Text("Today",color=Green,fontSize=12.sp)
                     }
-                    Text("Select a date to preview meals. Calendar sync and reminders are planned for a future release.",color=Muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
+                    IconButton(onClick={selectedDate=selectedDate.plusDays(1)}) { Icon(Icons.Default.ChevronRight,"Next day") }
                 }
             }
         }
-        item { Section("November $day","2,000 kcal target") }
-        items(meals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
+        item {
+            Row(verticalAlignment=Alignment.CenterVertically) {
+                Section("Meals for this day"," ${allMeals.size} meals")
+                Spacer(Modifier.width(8.dp))
+                IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
+            }
+        }
+        items(allMeals) { meal ->
+            MealCard(meal,meal.name in completed) {
+                scope.launch {
+                    val dao=database.mealCompletionDao()
+                    if(meal.name in completed) dao.removeCompletion(dateKey,meal.name)
+                    else dao.saveCompletion(MealCompletion(dateKey,meal.name))
+                }
+            }
+        }
+        items(customMeals,key={it.id}) { custom ->
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                TextButton(onClick={scope.launch { database.customMealDao().delete(custom) }}) {
+                    Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
+                    Text("Remove",color=Muted)
+                }
+            }
+        }
+        item { Text("Sample meal nutrition is illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
+    if(showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={title,time,ingredients,kcal ->
+        scope.launch {
+            database.customMealDao().insert(CustomMeal(date=dateKey,title=title,time=time,ingredients=ingredients,kcal=kcal))
+        }
+        showAdd=false
+    })
 }
 private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String)
 private val recipes=listOf(

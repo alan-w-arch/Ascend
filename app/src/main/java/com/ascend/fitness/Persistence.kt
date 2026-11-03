@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.Delete
+import androidx.room.Update
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -49,6 +51,12 @@ interface CustomMealDao {
 
     @Insert
     suspend fun insert(meal: CustomMeal)
+
+    @Update
+    suspend fun update(meal: CustomMeal)
+
+    @Delete
+    suspend fun delete(meal: CustomMeal)
 }
 
 @Database(entities = [MealCompletion::class, CustomMeal::class], version = 2, exportSchema = false)
