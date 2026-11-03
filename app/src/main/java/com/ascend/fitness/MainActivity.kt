@@ -297,7 +297,25 @@ private val recipes=listOf(
                 Text(steps)
                 Text("Nutrition and cost are estimates; adjust portions and ingredients to your needs.",color=Muted,fontSize=12.sp)
             }},
-            confirmButton={TextButton(onClick={selectedRecipe=null}){Text("Close")}}
+            confirmButton={
+                Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick={
+                        scope.launch {
+                            database.customMealDao().insert(
+                                CustomMeal(
+                                    date=LocalDate.now().toString(),
+                                    title=recipe.title,
+                                    time="Any time",
+                                    ingredients=ingredients,
+                                    kcal=recipe.kcal
+                                )
+                            )
+                            selectedRecipe=null
+                        }
+                    }) { Text("Add to today") }
+                    TextButton(onClick={selectedRecipe=null}) { Text("Close") }
+                }
+            }
         )
     }
 }
