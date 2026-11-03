@@ -721,6 +721,24 @@ private val recipes=listOf(
                             Text(if(value.isNullOrBlank()) "—" else "$value kg",color=if(value.isNullOrBlank()) Muted else Ink,fontWeight=FontWeight.Medium,fontSize=12.sp)
                         }
                     }
+                    if(weightEntries.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick={
+                                val report=buildString {
+                                    appendLine("Ascend body-weight log")
+                                    appendLine("Date,Weight (kg)")
+                                    weightEntries.forEach { (day,weight) -> appendLine("$day,${String.format(java.util.Locale.US,"%.1f",weight)}") }
+                                }
+                                val share=Intent(Intent.ACTION_SEND).apply {
+                                    type="text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT,"Ascend body-weight log")
+                                    putExtra(Intent.EXTRA_TEXT,report)
+                                }
+                                context.startActivity(Intent.createChooser(share,"Share weight log"))
+                            },
+                            modifier=Modifier.fillMaxWidth()
+                        ) { Icon(Icons.Default.Share,"Share weight log"); Spacer(Modifier.width(8.dp)); Text("Share 7-day weight log") }
+                    }
                 }
             }
         }
