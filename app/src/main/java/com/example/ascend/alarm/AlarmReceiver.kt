@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.example.ascend.R
+import com.ascend.fitness.R
 
 class AlarmReceiver : BroadcastReceiver() {
 
