@@ -209,6 +209,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
 @Composable private fun Plan(p:PaddingValues,database:AscendDatabase,target:Int) {
     val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var showAdd by remember { mutableStateOf(false) }
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     var showRecipePicker by remember { mutableStateOf(false) }
@@ -229,7 +230,10 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     IconButton(onClick={selectedDate=selectedDate.minusDays(1)}) { Icon(Icons.Default.ChevronLeft,"Previous day") }
                     Column(horizontalAlignment=Alignment.CenterHorizontally) {
                         Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("EEEE")),color=Ink,fontWeight=FontWeight.Bold)
-                        Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy")),color=Muted)
+                        TextButton(onClick={showDatePicker=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=0.dp)) {
+                            Text(selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy")),color=Green)
+                            Icon(Icons.Default.CalendarMonth,"Choose date",tint=Green,modifier=Modifier.size(16.dp))
+                        }
                         if(selectedDate==LocalDate.now()) Text("Today",color=Green,fontSize=12.sp)
                         else TextButton(onClick={selectedDate=LocalDate.now()}) { Text("Today",color=Green) }
                     }
@@ -320,6 +324,17 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
             }
         }
         item { Text("Sample meal nutrition is illustrative, not verified. Custom meal values are user-entered; check package labels and serving sizes when logging.",color=Muted,fontSize=11.sp) }
+    }
+    if(showDatePicker) {
+        val pickerState=rememberDatePickerState(initialSelectedDateMillis=selectedDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
+        DatePickerDialog(
+            onDismissRequest={showDatePicker=false},
+            confirmButton={TextButton(onClick={
+                pickerState.selectedDateMillis?.let { millis -> selectedDate=java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate() }
+                showDatePicker=false
+            }) { Text("Go to date") }},
+            dismissButton={TextButton(onClick={showDatePicker=false}) { Text("Cancel") }}
+        ) { DatePicker(state=pickerState) }
     }
     if(showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={title,time,ingredients,kcal,protein,carbs,fat ->
         scope.launch {
