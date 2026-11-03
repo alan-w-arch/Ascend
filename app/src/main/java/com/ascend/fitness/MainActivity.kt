@@ -332,6 +332,7 @@ private val recipes=listOf(
             title={Text(recipe.title)},
             text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
                 Text("${recipe.timing} · ${recipe.kcal} kcal · estimated ₹${recipe.cost}/serving",color=Muted)
+                Text("Protein ${recipe.protein}g · Carbs ${recipe.carbs}g · Fat ${recipe.fat}g",color=Green,fontWeight=FontWeight.SemiBold)
                 Text("Ingredients",fontWeight=FontWeight.Bold)
                 Text(ingredients)
                 Text("Method",fontWeight=FontWeight.Bold)
