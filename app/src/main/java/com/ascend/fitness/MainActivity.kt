@@ -140,7 +140,7 @@ private val meals = listOf(
         }
         item {
             Row(verticalAlignment=Alignment.CenterVertically) {
-                Section("Today's meals","${allMeals.size} meals · $consumed kcal logged")
+                Section("Today's meals","${loggedMeals.size}/${allMeals.size} done · $consumed kcal")
                 Spacer(Modifier.width(8.dp))
                 IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
             }
