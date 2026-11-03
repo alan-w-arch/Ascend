@@ -77,12 +77,12 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     }
 }
 
-private data class Meal(val name:String, val time:String, val title:String, val ingredients:String, val kcal:Int, val emoji:String)
+private data class Meal(val name:String, val time:String, val title:String, val ingredients:String, val kcal:Int, val emoji:String, val protein:Int=0, val carbs:Int=0, val fat:Int=0)
 private val meals = listOf(
-    Meal("Breakfast","8:00 AM","Banana oats bowl","Oats · banana · milk",380,"🥣"),
-    Meal("Lunch","1:00 PM","Chickpea rice bowl","Chickpeas · rice · cucumber",520,"🍛"),
-    Meal("Snack","4:30 PM","Peanut banana bites","Banana · peanuts",180,"🍌"),
-    Meal("Dinner","8:00 PM","Moong dal khichdi","Moong dal · rice · spices",420,"🍲")
+    Meal("Breakfast","8:00 AM","Banana oats bowl","Oats · banana · milk",380,"🥣",14,62,9),
+    Meal("Lunch","1:00 PM","Chickpea rice bowl","Chickpeas · rice · cucumber",520,"🍛",18,88,8),
+    Meal("Snack","4:30 PM","Peanut banana bites","Banana · peanuts",180,"🍌",5,27,8),
+    Meal("Dinner","8:00 PM","Moong dal khichdi","Moong dal · rice · spices",420,"🍲",17,72,7)
 )
 
 @Composable private fun Header(title:String, subtitle:String) {
@@ -110,7 +110,7 @@ private val meals = listOf(
                 Text(meal.time,color=Muted,fontSize=11.sp)
                 Text(meal.title,color=Ink,fontWeight=FontWeight.SemiBold)
                 Text(meal.ingredients,color=Muted,fontSize=12.sp)
-                Text("${meal.kcal} kcal",color=Green,fontSize=12.sp,fontWeight=FontWeight.Bold)
+                Text("${meal.kcal} kcal · P ${meal.protein}g · C ${meal.carbs}g · F ${meal.fat}g",color=Green,fontSize=11.sp,fontWeight=FontWeight.Bold)
             }
             IconButton(onClick=onCheck) { Icon(if(checked) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,"Mark complete",tint=if(checked) Green else Muted) }
         }
@@ -118,8 +118,8 @@ private val meals = listOf(
 }
 @Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit) {
     var showAdd by remember { mutableStateOf(false) }
-    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️") }
-    val consumed = allMeals.filter { it.name in done }.sumOf { it.kcal }
+    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
+    val loggedMeals = allMeals.filter { it.name in done }\n    val consumed = loggedMeals.sumOf { it.kcal }\n    val protein = loggedMeals.sumOf { it.protein }\n    val carbs = loggedMeals.sumOf { it.carbs }\n    val fat = loggedMeals.sumOf { it.fat }
     val target = 2000
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Good morning","Your plan for today") }
@@ -129,7 +129,7 @@ private val meals = listOf(
                     Text("DAILY TARGET",color=Color.White.copy(alpha=.8f),fontSize=12.sp,fontWeight=FontWeight.Bold)
                     Row(verticalAlignment=Alignment.Bottom) { Text("%,d".format(consumed),color=Color.White,fontSize=34.sp,fontWeight=FontWeight.Bold); Text(" / %,d kcal".format(target),color=Color.White.copy(alpha=.8f),modifier=Modifier.padding(bottom=6.dp)) }
                     LinearProgressIndicator(progress={(consumed.toFloat()/target).coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth().height(8.dp),color=Color.White,trackColor=Color.White.copy(alpha=.25f))
-                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Macro("Protein","68 g"); Macro("Carbs","142 g"); Macro("Fat","38 g") }
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Macro("Protein","${protein} g"); Macro("Carbs","${carbs} g"); Macro("Fat","${fat} g") }
                 }
             }
         }
@@ -148,7 +148,7 @@ private val meals = listOf(
         showAdd=false
     })
 }
-@Composable private fun AddMealDialog(onDismiss:()->Unit,onSave:(String,String,String,Int)->Unit) {
+@Composable private fun AddMealDialog(onDismiss:()->Unit,onSave:(String,String,String,Int,Int,Int,Int)->Unit) {
     var title by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("12:00 PM") }
     var ingredients by remember { mutableStateOf("") }
@@ -162,10 +162,10 @@ private val meals = listOf(
                 OutlinedTextField(value=title,onValueChange={title=it},label={Text("Meal name")},singleLine=true)
                 OutlinedTextField(value=time,onValueChange={time=it},label={Text("Time")},singleLine=true)
                 OutlinedTextField(value=ingredients,onValueChange={ingredients=it},label={Text("Ingredients")},singleLine=true)
-                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)
+                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)\n                OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit)},label={Text("Protein (g)")},singleLine=true)\n                OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit)},label={Text("Carbs (g)")},singleLine=true)\n                OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit)},label={Text("Fat (g)")},singleLine=true)
             }
         },
-        confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt())}){Text("Save")} },
+        confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt(),protein.toIntOrNull()?:0,carbs.toIntOrNull()?:0,fat.toIntOrNull()?:0)}){Text("Save")} },
         dismissButton={TextButton(onClick=onDismiss){Text("Cancel")}}
     )
 }
@@ -177,7 +177,7 @@ private val meals = listOf(
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
     val scope = rememberCoroutineScope()
     val completed = completedIds.toSet()
-    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️") }
+    val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Meal plan","Plan and track meals by date") }
         item {
@@ -219,9 +219,9 @@ private val meals = listOf(
         }
         item { Text("Sample meal nutrition is illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
-    if(showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={title,time,ingredients,kcal ->
+    if(showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={title,time,ingredients,kcal,protein,carbs,fat ->
         scope.launch {
-            database.customMealDao().insert(CustomMeal(date=dateKey,title=title,time=time,ingredients=ingredients,kcal=kcal))
+            database.customMealDao().insert(CustomMeal(date=dateKey,title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat))
         }
         showAdd=false
     })

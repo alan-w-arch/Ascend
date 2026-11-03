@@ -56,7 +56,10 @@ data class CustomMeal(
     val title: String,
     val time: String,
     val ingredients: String,
-    val kcal: Int
+    val kcal: Int,
+    val protein: Int = 0,
+    val carbs: Int = 0,
+    val fat: Int = 0
 )
 
 @Dao
@@ -74,7 +77,7 @@ interface CustomMealDao {
     suspend fun delete(meal: CustomMeal)
 }
 
-@Database(entities = [MealCompletion::class, CustomMeal::class, SavedRecipe::class], version = 3, exportSchema = false)
+@Database(entities = [MealCompletion::class, CustomMeal::class, SavedRecipe::class], version = 4, exportSchema = false)
 abstract class AscendDatabase : RoomDatabase() {
     abstract fun mealCompletionDao(): MealCompletionDao
     abstract fun customMealDao(): CustomMealDao
@@ -84,7 +87,7 @@ abstract class AscendDatabase : RoomDatabase() {
         @Volatile private var INSTANCE: AscendDatabase? = null
         fun getInstance(context: Context): AscendDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, AscendDatabase::class.java, "ascend_local.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
         }
     }
 }
@@ -106,5 +109,13 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `saved_recipes` (`recipeId` TEXT NOT NULL, PRIMARY KEY(`recipeId`))")
+    }
+}
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `custom_meals` ADD COLUMN `protein` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `custom_meals` ADD COLUMN `carbs` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `custom_meals` ADD COLUMN `fat` INTEGER NOT NULL DEFAULT 0")
     }
 }
