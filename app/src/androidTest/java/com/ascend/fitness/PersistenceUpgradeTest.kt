@@ -1,8 +1,6 @@
 package com.ascend.fitness
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -13,6 +11,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -57,7 +56,8 @@ class PersistenceUpgradeTest {
     fun dataStorePreferencesRemainReadableAfterReopeningTheStore() = runBlocking {
         val file = context.preferencesDataStoreFile("persistence_upgrade_test")
         file.delete()
-        val firstScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val firstJob = SupervisorJob()
+        val firstScope = CoroutineScope(firstJob + Dispatchers.IO)
         val firstStore = PreferenceDataStoreFactory.create(
             scope = firstScope,
             produceFile = { file }
@@ -67,9 +67,10 @@ class PersistenceUpgradeTest {
             it[stringPreferencesKey("recipe_tier")] = "Standard"
             it[intPreferencesKey("calorie_target")] = 2200
         }
-        firstScope.coroutineContext[SupervisorJob]?.cancel()
+        firstJob.cancel()
 
-        val secondScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val secondJob = SupervisorJob()
+        val secondScope = CoroutineScope(secondJob + Dispatchers.IO)
         val reopenedStore = PreferenceDataStoreFactory.create(
             scope = secondScope,
             produceFile = { file }
@@ -78,7 +79,7 @@ class PersistenceUpgradeTest {
         assertEquals(false, reopened[booleanPreferencesKey("hostel_mode")])
         assertEquals("Standard", reopened[stringPreferencesKey("recipe_tier")])
         assertEquals(2200, reopened[intPreferencesKey("calorie_target")])
-        secondScope.coroutineContext[SupervisorJob]?.cancel()
+        secondJob.cancel()
     }
 
     private fun createVersionOneDatabase(context: Context) {
