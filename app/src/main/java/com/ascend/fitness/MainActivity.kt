@@ -144,7 +144,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         item {
             Row(verticalAlignment=Alignment.CenterVertically) {
-                Section("Today's meals","${loggedMeals.size}/${allMeals.size} done · $consumed kcal")
+                Section("Today's meals","${loggedMeals.size}/${allMeals.size} done · ${allMeals.size-loggedMeals.size} left · $consumed kcal")
                 Spacer(Modifier.width(8.dp))
                 IconButton(onClick={showAdd=true}) { Icon(Icons.Default.AddCircle,"Add meal",tint=Green) }
             }
