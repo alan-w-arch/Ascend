@@ -56,6 +56,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
     val tier = preferences[stringPreferencesKey("recipe_tier")] ?: "Budget"
     val calorieTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] ?: 2000
     val proteinTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("protein_target")] ?: 100
+    val waterTarget = preferences[androidx.datastore.preferences.core.intPreferencesKey("water_target_ml")] ?: 2000
     fun toggleMeal(mealId: String) {
         scope.launch {
             val dao = database.mealCompletionDao()
@@ -77,7 +78,7 @@ fun AscendApp(context: android.content.Context, database: AscendDatabase) {
                 0 -> Today(p, calorieTarget, proteinTarget, done, customMeals, { meal -> scope.launch { database.customMealDao().insert(meal) } }, { meal -> scope.launch { database.customMealDao().update(meal) } }, ::toggleMeal, { meal -> scope.launch { database.mealCompletionDao().removeCompletion(today,"custom-${meal.id}"); database.customMealDao().delete(meal) } })
                 1 -> Plan(p, database, calorieTarget)
                 2 -> Recipes(p, tier, hostel, database) { selected -> scope.launch { context.ascendPreferences.edit { it[stringPreferencesKey("recipe_tier")] = selected } } }
-                else -> Profile(p, hostel, tier, calorieTarget, proteinTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("protein_target")] = target } } })
+                else -> Profile(p, hostel, tier, calorieTarget, proteinTarget, waterTarget, { enabled -> scope.launch { context.ascendPreferences.edit { it[booleanPreferencesKey("hostel_mode")] = enabled } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("calorie_target")] = target } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("protein_target")] = target } } }, { target -> scope.launch { context.ascendPreferences.edit { it[androidx.datastore.preferences.core.intPreferencesKey("water_target_ml")] = target } } })
             }
         }
     }
@@ -664,7 +665,7 @@ private val recipes=listOf(
         )
     }
 }
-@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,target:Int,proteinTarget:Int,onHostel:(Boolean)->Unit,onTarget:(Int)->Unit,onProteinTarget:(Int)->Unit) {
+@Composable private fun Profile(p:PaddingValues,hostel:Boolean,tier:String,target:Int,proteinTarget:Int,waterTarget:Int,onHostel:(Boolean)->Unit,onTarget:(Int)->Unit,onProteinTarget:(Int)->Unit,onWaterTarget:(Int)->Unit) {
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Your profile","Preferences for a plan that fits your life") }
         item {
@@ -683,6 +684,10 @@ private val recipes=listOf(
                     ProfileRow("Daily protein target","$proteinTarget g")
                     Slider(value=proteinTarget.toFloat(),onValueChange={onProteinTarget(it.toInt())},valueRange=30f..200f,steps=33)
                     Text("Set a personal tracking goal from 30 to 200 g/day. Protein needs vary; this setting is not medical advice.",color=Muted,fontSize=11.sp)
+                    Divider()
+                    ProfileRow("Daily water target","$waterTarget ml")
+                    Slider(value=waterTarget.toFloat(),onValueChange={onWaterTarget((it.toInt()/250)*250)},valueRange=1000f..4000f,steps=11)
+                    Text("Choose a tracking target from 1,000 to 4,000 ml in 250 ml steps. Fluid needs vary with activity, climate, and health.",color=Muted,fontSize=11.sp)
                 }
             }
         }
