@@ -245,16 +245,16 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }
         item {
             val weekStart=selectedDate.minusDays((selectedDate.dayOfWeek.value-1).toLong())
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween,modifier=Modifier.fillMaxWidth()) {
+                IconButton(onClick={selectedDate=selectedDate.minusWeeks(1)}) { Icon(Icons.Default.ChevronLeft,"Previous week",tint=Green) }
+                Text(weekStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))+" – "+weekStart.plusDays(6).format(java.time.format.DateTimeFormatter.ofPattern("MMM d")),fontWeight=FontWeight.SemiBold,color=Ink)
+                IconButton(onClick={selectedDate=selectedDate.plusWeeks(1)}) { Icon(Icons.Default.ChevronRight,"Next week",tint=Green) }
+            }
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 (0L..6L).forEach { offset ->
                     val day=weekStart.plusDays(offset)
                     val selected=day==selectedDate
-                    Surface(
-                        onClick={selectedDate=day},
-                        shape=RoundedCornerShape(14.dp),
-                        color=if(selected) Green else Color.White,
-                        contentColor=if(selected) Color.White else Ink
-                    ) {
+                    Surface(onClick={selectedDate=day},shape=RoundedCornerShape(14.dp),color=if(selected) Green else Color.White,contentColor=if(selected) Color.White else Ink) {
                         Column(Modifier.width(42.dp).padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {
                             Text(day.format(java.time.format.DateTimeFormatter.ofPattern("EE")),fontSize=11.sp,color=if(selected) Color.White.copy(alpha=.85f) else Muted)
                             Text(day.dayOfMonth.toString(),fontWeight=FontWeight.Bold)
