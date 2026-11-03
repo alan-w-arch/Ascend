@@ -210,6 +210,8 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showCopyDatePicker by remember { mutableStateOf(false) }
+    var copyTargetDate by remember { mutableStateOf(LocalDate.now().plusDays(1)) }
     var showAdd by remember { mutableStateOf(false) }
     var editingMeal by remember { mutableStateOf<CustomMeal?>(null) }
     var showRecipePicker by remember { mutableStateOf(false) }
@@ -258,6 +260,9 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     val send=Intent(Intent.ACTION_SEND).apply { type="text/plain"; putExtra(Intent.EXTRA_SUBJECT,"Grocery list — $dateLabel"); putExtra(Intent.EXTRA_TEXT,text) }
                     context.startActivity(Intent.createChooser(send,"Share grocery list"))
                 }) { Icon(Icons.Default.ShoppingCart,"Share grocery list",tint=Green); Text("Ingredients") }
+                TextButton(onClick={copyTargetDate=selectedDate.plusDays(1);showCopyDatePicker=true}) {
+                    Icon(Icons.Default.Event,"Copy to date",tint=Green); Text("Copy to date")
+                }
                 TextButton(onClick={scope.launch {
                     val previousDate=selectedDate.minusDays(1).toString()
                     val previousMeals=database.customMealDao().getMeals(previousDate)
@@ -324,6 +329,26 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
             }
         }
         item { Text("Sample meal nutrition is illustrative, not verified. Custom meal values are user-entered; check package labels and serving sizes when logging.",color=Muted,fontSize=11.sp) }
+    }
+    if(showCopyDatePicker) {
+        val copyPickerState=rememberDatePickerState(initialSelectedDateMillis=copyTargetDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
+        DatePickerDialog(
+            onDismissRequest={showCopyDatePicker=false},
+            confirmButton={TextButton(onClick={
+                copyPickerState.selectedDateMillis?.let { millis -> copyTargetDate=java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate() }
+                showCopyDatePicker=false
+                scope.launch {
+                    val sourceMeals=database.customMealDao().getMeals(dateKey)
+                    if(sourceMeals.isEmpty()) copyFeedback="No custom meals to copy from " + selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d")) + "."
+                    else if(copyTargetDate==selectedDate) copyFeedback="Choose a different date to copy these meals."
+                    else {
+                        sourceMeals.forEach { meal -> database.customMealDao().insert(meal.copy(id=0,date=copyTargetDate.toString())) }
+                        copyFeedback="Copied " + sourceMeals.size + " custom meal(s) to " + copyTargetDate.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy")) + ". Existing meals were kept."
+                    }
+                }
+            }) { Text("Copy meals") }},
+            dismissButton={TextButton(onClick={showCopyDatePicker=false}) { Text("Cancel") }}
+        ) { DatePicker(state=copyPickerState) }
     }
     if(showDatePicker) {
         val pickerState=rememberDatePickerState(initialSelectedDateMillis=selectedDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
