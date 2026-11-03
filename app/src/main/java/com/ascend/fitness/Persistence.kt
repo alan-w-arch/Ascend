@@ -7,6 +7,7 @@ import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -61,5 +62,19 @@ abstract class AscendDatabase : RoomDatabase() {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, AscendDatabase::class.java, "ascend_local.db")
                 .addMigrations(MIGRATION_1_2).build().also { INSTANCE = it }
         }
+    }
+}
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `custom_meals` (" +
+            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+            "`date` TEXT NOT NULL, " +
+            "`title` TEXT NOT NULL, " +
+            "`time` TEXT NOT NULL, " +
+            "`ingredients` TEXT NOT NULL, " +
+            "`kcal` INTEGER NOT NULL)"
+        )
     }
 }
