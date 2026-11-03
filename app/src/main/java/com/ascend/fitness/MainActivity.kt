@@ -119,7 +119,11 @@ private val meals = listOf(
 @Composable private fun Today(p:PaddingValues, done:Set<String>, customMeals:List<CustomMeal>, onAdd:(CustomMeal)->Unit, onDone:(String)->Unit) {
     var showAdd by remember { mutableStateOf(false) }
     val allMeals = meals + customMeals.map { Meal("custom-${it.id}",it.time,it.title,it.ingredients,it.kcal,"🍽️",it.protein,it.carbs,it.fat) }
-    val loggedMeals = allMeals.filter { it.name in done }\n    val consumed = loggedMeals.sumOf { it.kcal }\n    val protein = loggedMeals.sumOf { it.protein }\n    val carbs = loggedMeals.sumOf { it.carbs }\n    val fat = loggedMeals.sumOf { it.fat }
+    val loggedMeals = allMeals.filter { it.name in done }
+    val consumed = loggedMeals.sumOf { it.kcal }
+    val protein = loggedMeals.sumOf { it.protein }
+    val carbs = loggedMeals.sumOf { it.carbs }
+    val fat = loggedMeals.sumOf { it.fat }
     val target = 2000
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header("Good morning","Your plan for today") }
@@ -143,8 +147,8 @@ private val meals = listOf(
         items(allMeals) { MealCard(it,done.contains(it.name)){onDone(it.name)} }
         item { Text("Calories update from checked sample meals. Nutrition values are illustrative, not verified.",color=Muted,fontSize=11.sp) }
     }
-    if (showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={ title,time,ingredients,kcal ->
-        onAdd(CustomMeal(date=LocalDate.now().toString(),title=title,time=time,ingredients=ingredients,kcal=kcal))
+    if (showAdd) AddMealDialog(onDismiss={showAdd=false},onSave={ title,time,ingredients,kcal,protein,carbs,fat ->
+        onAdd(CustomMeal(date=LocalDate.now().toString(),title=title,time=time,ingredients=ingredients,kcal=kcal,protein=protein,carbs=carbs,fat=fat))
         showAdd=false
     })
 }
@@ -153,6 +157,9 @@ private val meals = listOf(
     var time by remember { mutableStateOf("12:00 PM") }
     var ingredients by remember { mutableStateOf("") }
     var kcal by remember { mutableStateOf("") }
+    var protein by remember { mutableStateOf("") }
+    var carbs by remember { mutableStateOf("") }
+    var fat by remember { mutableStateOf("") }
     val valid = title.isNotBlank() && kcal.toIntOrNull()?.let { it > 0 } == true
     AlertDialog(
         onDismissRequest=onDismiss,
@@ -162,7 +169,10 @@ private val meals = listOf(
                 OutlinedTextField(value=title,onValueChange={title=it},label={Text("Meal name")},singleLine=true)
                 OutlinedTextField(value=time,onValueChange={time=it},label={Text("Time")},singleLine=true)
                 OutlinedTextField(value=ingredients,onValueChange={ingredients=it},label={Text("Ingredients")},singleLine=true)
-                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)\n                OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit)},label={Text("Protein (g)")},singleLine=true)\n                OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit)},label={Text("Carbs (g)")},singleLine=true)\n                OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit)},label={Text("Fat (g)")},singleLine=true)
+                OutlinedTextField(value=kcal,onValueChange={kcal=it.filter(Char::isDigit)},label={Text("Calories (kcal)")},singleLine=true)
+                OutlinedTextField(value=protein,onValueChange={protein=it.filter(Char::isDigit)},label={Text("Protein (g)")},singleLine=true)
+                OutlinedTextField(value=carbs,onValueChange={carbs=it.filter(Char::isDigit)},label={Text("Carbs (g)")},singleLine=true)
+                OutlinedTextField(value=fat,onValueChange={fat=it.filter(Char::isDigit)},label={Text("Fat (g)")},singleLine=true)
             }
         },
         confirmButton={ TextButton(enabled=valid,onClick={onSave(title.trim(),time.trim().ifBlank{"Any time"},ingredients.trim().ifBlank{"Not specified"},kcal.toInt(),protein.toIntOrNull()?:0,carbs.toIntOrNull()?:0,fat.toIntOrNull()?:0)}){Text("Save")} },
@@ -226,13 +236,13 @@ private val meals = listOf(
         showAdd=false
     })
 }
-private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String)
+private data class Recipe(val title:String,val timing:String,val kcal:Int,val cost:Int,val tags:String,val emoji:String,val protein:Int,val carbs:Int,val fat:Int)
 private val recipes=listOf(
-    Recipe("Banana oats bowl","5 min · No cook",380,32,"Hostel-friendly · Breakfast","🥣"),
-    Recipe("Chickpea rice bowl","15 min · One pot",520,48,"High protein · Lunch","🍛"),
-    Recipe("Peanut banana bites","3 min · No cook",180,18,"Snack · No cook","🍌"),
-    Recipe("Moong dal khichdi","20 min · One pot",420,36,"Comfort food · Dinner","🍲"),
-    Recipe("Paneer veggie wrap","12 min · Pan",460,72,"Vegetarian · Lunch","🌯")
+    Recipe("Banana oats bowl","5 min · No cook",380,32,"Hostel-friendly · Breakfast","🥣",14,62,9),
+    Recipe("Chickpea rice bowl","15 min · One pot",520,48,"High protein · Lunch","🍛",18,88,8),
+    Recipe("Peanut banana bites","3 min · No cook",180,18,"Snack · No cook","🍌",5,27,8),
+    Recipe("Moong dal khichdi","20 min · One pot",420,36,"Comfort food · Dinner","🍲",17,72,7),
+    Recipe("Paneer veggie wrap","12 min · Pan",460,72,"Vegetarian · Lunch","🌯",22,48,18)
 )
 @Composable private fun Recipes(p:PaddingValues,tier:String,database:AscendDatabase,onTier:(String)->Unit) {
     val scope = rememberCoroutineScope()
@@ -307,7 +317,10 @@ private val recipes=listOf(
                                     title=recipe.title,
                                     time="Any time",
                                     ingredients=ingredients,
-                                    kcal=recipe.kcal
+                                    kcal=recipe.kcal,
+                                    protein=recipe.protein,
+                                    carbs=recipe.carbs,
+                                    fat=recipe.fat
                                 )
                             )
                             selectedRecipe=null
