@@ -149,6 +149,51 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     LazyColumn(Modifier.fillMaxSize().padding(p),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         item { Header(when (java.time.LocalTime.now().hour) { in 5..11 -> "Good morning"; in 12..16 -> "Good afternoon"; else -> "Good evening" },"Your plan for today") }
         item {
+            val moodKey=androidx.datastore.preferences.core.intPreferencesKey("wellness_mood_${LocalDate.now()}")
+            val energyKey=androidx.datastore.preferences.core.intPreferencesKey("wellness_energy_${LocalDate.now()}")
+            val mood=waterPreferences[moodKey] ?: 0
+            val energy=waterPreferences[energyKey] ?: 0
+            val moodLabels=listOf("Very low","Low","Okay","Good","Great")
+            val energyLabels=listOf("Drained","Low","Moderate","High","Energized")
+            val weeklyCheckins=(6 downTo 0).mapNotNull { offset ->
+                val day=LocalDate.now().minusDays(offset.toLong())
+                val m=waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("wellness_mood_$day")]
+                val e=waterPreferences[androidx.datastore.preferences.core.intPreferencesKey("wellness_energy_$day")]
+                if(m!=null && e!=null) m to e else null
+            }
+            Card(shape=RoundedCornerShape(20.dp),colors=CardDefaults.cardColors(containerColor=Color.White)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                    Text("Daily wellbeing check-in",color=Ink,fontWeight=FontWeight.Bold,fontSize=18.sp)
+                    Text("A quick optional snapshot of how you feel today.",color=Muted,fontSize=12.sp)
+                    Text("Mood",color=Ink,fontWeight=FontWeight.SemiBold)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                        moodLabels.forEachIndexed { index,label ->
+                            FilterChip(selected=mood==index+1,onClick={waterScope.launch { context.ascendPreferences.edit { it[moodKey]=index+1 } }},label={Text(label,fontSize=10.sp)},modifier=Modifier.weight(1f))
+                        }
+                    }
+                    Text("Energy",color=Ink,fontWeight=FontWeight.SemiBold)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                        energyLabels.forEachIndexed { index,label ->
+                            FilterChip(selected=energy==index+1,onClick={waterScope.launch { context.ascendPreferences.edit { it[energyKey]=index+1 } }},label={Text(label,fontSize=10.sp)},modifier=Modifier.weight(1f))
+                        }
+                    }
+                    if(weeklyCheckins.isNotEmpty()) {
+                        val averageMood=weeklyCheckins.map { it.first }.average()
+                        val averageEnergy=weeklyCheckins.map { it.second }.average()
+                        Divider()
+                        Text("7-day average · ${weeklyCheckins.size} check-ins",color=Muted,fontSize=12.sp)
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                            Text("Mood",color=Muted,fontSize=12.sp)
+                            Text(String.format(java.util.Locale.US,"%.1f / 5",averageMood),color=Ink,fontWeight=FontWeight.Bold,fontSize=12.sp)
+                            Text("Energy",color=Muted,fontSize=12.sp)
+                            Text(String.format(java.util.Locale.US,"%.1f / 5",averageEnergy),color=Ink,fontWeight=FontWeight.Bold,fontSize=12.sp)
+                        }
+                    } else Text("Your 7-day averages will appear after you log check-ins.",color=Muted,fontSize=11.sp)
+                    Text("Wellbeing notes are personal tracking, not a clinical assessment.",color=Muted,fontSize=11.sp)
+                }
+            }
+        }
+        item {
             Card(shape=RoundedCornerShape(24.dp),colors=CardDefaults.cardColors(containerColor=Green)) {
                 Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text("DAILY TARGET",color=Color.White.copy(alpha=.8f),fontSize=12.sp,fontWeight=FontWeight.Bold)
