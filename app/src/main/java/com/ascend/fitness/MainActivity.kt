@@ -211,6 +211,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
     var showRecipePicker by remember { mutableStateOf(false) }
     var selectedPlanRecipe by remember { mutableStateOf<Recipe?>(null) }
     var planRecipeServings by remember { mutableIntStateOf(1) }
+    var copyFeedback by remember { mutableStateOf<String?>(null) }
     val dateKey = selectedDate.toString()
     val completedIds by database.mealCompletionDao().observeCompletedMealIds(dateKey).collectAsState(initial=emptyList())
     val customMeals by database.customMealDao().observeMeals(dateKey).collectAsState(initial=emptyList())
@@ -231,6 +232,19 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     }
                     IconButton(onClick={selectedDate=selectedDate.plusDays(1)}) { Icon(Icons.Default.ChevronRight,"Next day") }
                 }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                TextButton(onClick={scope.launch {
+                    val previousDate=selectedDate.minusDays(1).toString()
+                    val previousMeals=database.customMealDao().getMeals(previousDate)
+                    if(previousMeals.isEmpty()) copyFeedback="No custom meals were saved for ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}."
+                    else {
+                        previousMeals.forEach { meal -> database.customMealDao().insert(meal.copy(id=0,date=dateKey)) }
+                        copyFeedback="Copied ${previousMeals.size} custom ${if(previousMeals.size==1) "meal" else "meals"} from ${selectedDate.minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern(\"MMM d\"))}. Existing meals were kept."
+                    }
+                }}) { Icon(Icons.Default.ContentCopy,"Copy previous day",tint=Green); Text("Copy previous day") }
             }
         }
         item {
@@ -316,6 +330,7 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
         }},
         confirmButton={TextButton(onClick={showRecipePicker=false}){Text("Close")}}
     )
+    copyFeedback?.let { message -> AlertDialog(onDismissRequest={copyFeedback=null},title={Text("Plan copied")},text={Text(message)},confirmButton={TextButton(onClick={copyFeedback=null}){Text("OK")}}) }
     selectedPlanRecipe?.let { recipe -> AlertDialog(
         onDismissRequest={selectedPlanRecipe=null},
         title={Text("Add ${recipe.title}")},

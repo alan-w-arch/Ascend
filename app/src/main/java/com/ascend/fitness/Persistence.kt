@@ -67,6 +67,9 @@ interface CustomMealDao {
     @Query("SELECT * FROM custom_meals WHERE date = :date ORDER BY id")
     fun observeMeals(date: String): Flow<List<CustomMeal>>
 
+    @Query("SELECT * FROM custom_meals WHERE date = :date ORDER BY id")
+    suspend fun getMeals(date: String): List<CustomMeal>
+
     @Insert
     suspend fun insert(meal: CustomMeal)
 
