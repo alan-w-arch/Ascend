@@ -429,7 +429,7 @@ private val recipes=listOf(
                 }
             }
         }
-        item { Text("Hostel mode and recipe budget are saved on this device. Membership and expert booking are not connected yet.",color=Muted,fontSize=11.sp) }
+        item { Text("Hostel mode and recipe budget are saved on this device. Membership, expert booking, and professional plan purchases are not connected yet.",color=Muted,fontSize=11.sp) }
     }
 }
 @Composable private fun ProfileRow(label:String,value:String) {
