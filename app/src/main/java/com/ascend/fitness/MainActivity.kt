@@ -263,12 +263,14 @@ private fun sortMealsByTime(items: List<Meal>): List<Meal> = items.sortedBy { me
                     else dao.saveCompletion(MealCompletion(dateKey,meal.name))
                 }
             }
-        }
-        items(customMeals,key={it.id}) { custom ->
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
-                TextButton(onClick={scope.launch { database.mealCompletionDao().removeCompletion(dateKey,"custom-${custom.id}"); database.customMealDao().delete(custom) }}) {
-                    Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
-                    Text("Remove",color=Muted)
+            if (meal.name.startsWith("custom-")) {
+                val customId=meal.name.removePrefix("custom-").toLongOrNull()
+                val custom=customMeals.firstOrNull { it.id==customId }
+                if(custom!=null) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
+                    TextButton(onClick={scope.launch { database.mealCompletionDao().removeCompletion(dateKey,"custom-${custom.id}"); database.customMealDao().delete(custom) }}) {
+                        Icon(Icons.Default.Delete,"Delete meal",tint=Muted)
+                        Text("Remove",color=Muted)
+                    }
                 }
             }
         }
